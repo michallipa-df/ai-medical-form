@@ -2,7 +2,7 @@ import streamlit as st
 import json
 import requests
 
-# --- GROQ AI AUDITOR CONFIG ---
+# --- GROQ AI AUDITOR ---
 class GroqMedicalAuditor:
     def __init__(self, api_key, model="llama-3.3-70b-versatile"):
         self.url = "https://api.groq.com/openai/v1/chat/completions"
@@ -10,65 +10,51 @@ class GroqMedicalAuditor:
         self.model = model
 
     def cross_check_logic(self, data):
-        """Strict logic-gate prompt to find contradictions between text and selections."""
         if not self.api_key:
             return "❌ Groq API Key missing in Secrets."
 
+        # The prompt specifically targets your typed history vs listed meds mismatch
         prompt = f"""
-        [SYSTEM: YOU ARE A VA CLAIMS DATA AUDITOR. DO NOT SUMMARIZE. FIND EXPLICIT DATA CONTRADICTIONS.]
+        [SYSTEM: VA CLAIMS AUDITOR. STRICT DATA RECONCILIATION ONLY.]
         
-        INPUT DATA FOR AUDIT:
+        INPUT DATA:
         {data}
 
-        MANDATORY RULES:
-        1. MEDICATION COUNT: 
-           - Identify value of 'Sinusitis__c.Sinus_Q11a__c' (Selected Med Count).
-           - Identify how many name fields have text: 'Sinusitis__c.Sinus_Q11aaa__c', 'Sinusitis__c.Sinus_Q11aba__c', 'Sinusitis__c.Sinus_Q11aca__c'.
-           - IF the user selected "2" but only named "1" (or 0), flag it.
-           - READ history text 'Sinusitis__c.Sinus_Q10c__c'. IF text mentions a number of meds that doesn't match the list, flag it.
-
-        2. SYMPTOM MATCHING (Q12 vs Q14):
-           - Look at checkboxes in 'Sinusitis__c.Sinus_Q12__c'.
-           - Scan 'Sinusitis__c.Sinus_Q14__c' (Detailed Text) for these symptoms.
-           - IF a symptom is checked but NOT described in the text, report: "💡 MISSING DETAIL: You checked [Symptom] but did not describe its severity/frequency."
-           - IF text describes a symptom NOT checked in Q12, report: "🚩 MISSING CHECKBOX: You described [Symptom] but didn't check the box."
-
-        3. RATING SCHEDULE AUDIT:
-           - Check 'Sinusitis__c.Sinus_Q16__c' (Incapacitating Episodes). 
-           - IF value is '0' but text describes "missing work" or "bed rest," report: "⚠️ RATING WARNING: Your text describes incapacitation, but your count is '0'. This will lower your rating."
+        MANDATORY CHECKLIST:
+        1. Mismatched Counts: Scan 'Sinus_Q10c__c' (History) for numbers (e.g. "two", "2"). Compare this to the count of medications provided in 'Sinus_Q11aaa__c', 'Sinus_Q11aba__c', 'Sinus_Q11aca__c'.
+           - IF USER SAYS "I take two" BUT ONLY LISTS 0 OR 1, YOU MUST FLAG THIS.
+        2. Unchecked Symptoms: If 'Sinus_Q14__c' mentions specific issues like 'pus', 'pain', or 'headaches', but those boxes are NOT checked in 'Sinus_Q12__c', flag it.
+        3. Rating Trap: If 'Sinus_Q16__c' is '0' but text describes being unable to work or bed rest, warn the user.
+        4. Empty Fields: If surgery is checked but 'Findings' text is empty, flag it.
 
         OUTPUT STRUCTURE:
         ### 🚩 LOGICAL CONFLICTS
-        - [Specific Mismatch]
+        - [Specific mismatch]
         ### 💡 MISSING DETAILS
-        - [Checked boxes with no text support]
+        - [Checked boxes with no text]
         ### 🩺 CLINICAL REFINEMENT
-        - [User Word] -> [Clinical Term]
+        - [User Term] -> [Clinical Term]
         """
         headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
         payload = {
             "model": self.model,
-            "messages": [
-                {"role": "system", "content": "You are a literal medical data validator. Find contradictions between structured fields and unstructured text."},
-                {"role": "user", "content": prompt}
-            ],
-            "temperature": 0.0 # Absolute zero for mathematical/logical accuracy
+            "messages": [{"role": "system", "content": "You are a literal data validator. No summaries."},
+                         {"role": "user", "content": prompt}],
+            "temperature": 0.0
         }
         try:
             res = requests.post(self.url, json=payload, headers=headers, timeout=25)
             return res.json()['choices'][0]['message']['content']
-        except Exception as e:
-            return f"❌ Groq Error: {str(e)}"
+        except:
+            return "❌ Groq Connection Error."
 
 st.set_page_config(page_title="Complete Sinusitis DBQ", layout="wide")
-
-# Get API Key from Streamlit Secrets
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
 auditor = GroqMedicalAuditor(GROQ_API_KEY)
 
 st.title("Chronic Sinusitis Questionnaire")
 
-# --- SECTION 1: Sinusitis Questionnaire (ffSection0) ---
+# --- YOUR ORIGINAL FORM START ---
 claim_selection = st.selectbox(
     "Are you applying for an initial claim or a re-evaluation for an existing service-connected disability? *",
     ["--select an item--", "Initial Claim", "Re-evaluation for Existing"],
@@ -97,17 +83,15 @@ if claim_selection != "--select an item--":
                     with c2: st.text_input("Dosage", key=dose_key)
                     with c3: st.text_input("Frequency", key=freq_key)
             if num_meds == "More than 3":
-                st.text_area("List additional medications:", key="Sinusitis__c.Sinus_Q11b__c")
+                st.text_area("List each additional medication(s) AND dosages/frequency:", key="Sinusitis__c.Sinus_Q11b__c")
 
     st.markdown("---")
     sc_trigger = st.radio("Are you service connected or seeking service connection for Sinusitis? *", ["Yes", "No"], index=1, horizontal=True, key="Sinusitis__c.Sinus_Q48__c")
     if sc_trigger == "Yes":
         st.multiselect("Indicate the sinus currently affected: *", ["Maxillary", "Frontal", "Ethmoid", "Sphenoid", "Pansinusitus", "Unknown"], key="Sinusitis__c.Sinus_Q34__c")
         symp_list = st.multiselect("Select all sinus symptoms that apply: *", ["Near Constant Sinusitis", "Headaches caused by sinusitis", "Sinus pain", "Sinus tenderness", "Discharge containing pus", "Crusting"], key="Sinusitis__c.Sinus_Q12__c")
-        
         if "Near Constant Sinusitis" in symp_list:
             st.selectbox("Near constant sinusitis frequency: *", ["Daily", "5-6 days per week", "3-4 days per week"], key="Sinusitis__c.Sinus_Q13__c")
-        
         st.text_area("Please describe the symptoms you selected in detail: *", key="Sinusitis__c.Sinus_Q14__c")
         st.selectbox("Non-incapacitating episodes (last 12 months): *", ["1", "2", "3", "4", "5", "6", "7 or more"], key="Sinusitis__c.Sinus_Q15__c")
         st.selectbox("Incapacitating episodes (last 12 months): *", ["0", "1", "2", "3 or more"], key="Sinusitis__c.Sinus_Q16__c")
@@ -176,15 +160,14 @@ if st.radio("Seeking connection for deviated septum? *", ["Yes", "No"], index=1,
 
 st.header("Tumors/Neoplasms")
 if st.radio("Tumors related to above conditions? *", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q43__c") == "Yes":
-    tum_state = st.selectbox("Neoplasm State:", ["Benign", "Malignant"], key="Sinusitis__c.Sinus_Q42__c")
+    tum_state = st.selectbox("State:", ["Benign", "Malignant"], key="Sinusitis__c.Sinus_Q42__c")
     if tum_state == "Malignant":
-        st.selectbox("Malignant Status:", ["Active", "Remission"], key="Sinusitis__c.Sinus_Q49__c")
-        if st.selectbox("Neoplasm Type:", ["Primary", "Secondary"], key="Sinusitis__c.Sinus_Q50__c") == "Secondary":
-            st.text_area("Indicate Primary site:", key="Sinusitis__c.Sinus_Q51__c")
-
-    tr_status = st.selectbox("Treatment status:", ["Current", "Completed", "No"], key="Sinusitis__c.Sinus_Q52__c")
+        st.selectbox("Status:", ["Active", "Remission"], key="Sinusitis__c.Sinus_Q49__c")
+        if st.selectbox("Type:", ["Primary", "Secondary"], key="Sinusitis__c.Sinus_Q50__c") == "Secondary":
+            st.text_area("Primary site:", key="Sinusitis__c.Sinus_Q51__c")
+    tr_status = st.selectbox("Treatment status:", ["Yes - Current", "Yes - Completed", "No"], key="Sinusitis__c.Sinus_Q52__c")
     if tr_status != "No":
-        t_t = st.multiselect("Treatment Types:", ["Radiation", "Chemotherapy", "X-ray", "Other"], key="Sinusitis__c.Sinus_Q44__c")
+        t_t = st.multiselect("Treatments:", ["Radiation", "Chemotherapy", "X-ray", "Other"], key="Sinusitis__c.Sinus_Q44__c")
         if "Radiation" in t_t: 
             st.date_input("Recent radiation", key="Sinusitis__c.Sinus_Q53__c")
             st.date_input("Radiation completion", key="Sinusitis__c.Sinus_Q54__c")
@@ -192,7 +175,6 @@ if st.radio("Tumors related to above conditions? *", ["Yes", "No"], index=1, key
             st.date_input("Recent chemo", key="Sinusitis__c.Sinus_Q55__c")
             st.date_input("Chemo completion", key="Sinusitis__c.Sinus_Q56__c")
         if "Other" in t_t: st.text_area("Describe other treatments:", key="Sinusitis__c.Sinus_Q45__c")
-
     if st.radio("Had surgery on neoplasm?", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q46__c") == "Yes":
         st.text_area("Neoplasm surgery description:", key="Sinusitis__c.Sinus_Q47__c")
 
@@ -202,15 +184,15 @@ st.text_area("Sinusitis impact on occupational tasks: *", key="Sinusitis__c.Sinu
 st.text_input("Veteran Name: *", key="Sinusitis__c.DBQ__c.Veteran_Name_Text__c")
 st.text_input("Date Submitted (MM/DD/YYYY): *", key="Sinusitis__c.Date_Submitted__c")
 
-# --- AI AUDITOR CROSS-CHECK ---
+# --- YOUR ORIGINAL FORM END ---
+
 st.divider()
-if st.button("🔍 Run Clinical Cross-Check (Groq AI)"):
+if st.button("🔍 Run Logical Cross-Check (Groq AI)"):
     all_form_data = {k: v for k, v in st.session_state.items() if "Sinusitis__c" in str(k)}
-    with st.spinner("Analyzing data for logical inconsistencies..."):
+    with st.spinner("Analyzing for contradictions..."):
         audit_feedback = auditor.cross_check_logic(all_form_data)
         st.sidebar.markdown("### 🩺 Auditor Results")
         st.sidebar.markdown(audit_feedback)
 
-# --- DOWNLOAD ---
 form_data = {k: v for k, v in st.session_state.items() if "Sinusitis__c" in str(k)}
 st.download_button("📥 Download JSON", json.dumps(form_data, indent=4), "sinus_dbq.json", "application/json")
