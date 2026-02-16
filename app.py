@@ -13,40 +13,80 @@ class GroqMedicalAuditor:
         if not self.api_key:
             return "❌ Groq API Key missing in Secrets."
 
-        # The prompt specifically targets your typed history vs listed meds mismatch
+        # Exhaustive Mapping Reference for ALL fields in sinus_form.html
         prompt = f"""
-        [SYSTEM: VA CLAIMS AUDITOR. STRICT DATA RECONCILIATION ONLY.]
+        [SYSTEM: VA CLAIMS AUDITOR. CONVERT DATA KEYS TO HUMAN NAMES IN YOUR RESPONSE.]
         
-        INPUT DATA:
+        FIELD MAPPING DICTIONARY:
+        --- SECTION: HISTORY & MEDS ---
+        - Sinus_Q10c__c: "Brief History of Sinus Condition"
+        - Sinus_Q11a__c: "Selected Number of Medications"
+        - Sinus_Q11aaa__c, Sinus_Q11aba__c, Sinus_Q11aca__c: "Medication Names (#1, #2, #3)"
+        - Sinus_Q11b__c: "Additional Medications List"
+        
+        --- SECTION: CLINICAL FINDINGS ---
+        - Sinus_Q34__c: "Affected Sinus Types"
+        - Sinus_Q12__c: "Selected Symptoms Checkboxes"
+        - Sinus_Q13__c: "Near Constant Sinusitis Frequency"
+        - Sinus_Q14__c: "Detailed Symptom Description"
+        - Sinus_Q15__c: "Non-Incapacitating Episodes Count"
+        - Sinus_Q16__c: "Incapacitating Episodes Count"
+        - Sinus_Q17__c: "Had Sinus Surgery?"
+        - Sinus_Q17aab__c, Sinus_Q17abb__c, Sinus_Q17aca__c, Sinus_Q17acc__c: "Surgery Findings/Type"
+        
+        --- SECTION: RHINITIS & LARYNX ---
+        - Sinus_Q20a__c: "Nasal Passage Blockage (>50%)"
+        - Sinus_Q20b__c: "Complete Nasal Blockage Side"
+        - Sinus_Q20d__c: "Nasal Polyps Diagnosis"
+        - Sinus_Q35a__c: "Laryngitis Symptoms"
+        - Sinus_Q36d__c: "Complete Aphonia (Loss of Voice)"
+        - Sinus_Q36g__c: "Incomplete Aphonia"
+        - Sinus_Q39__c: "Injury to Pharynx"
+        
+        --- SECTION: SEPTUM & TUMORS ---
+        - Sinus_Q30__c: "Deviated Septum Connection"
+        - Sinus_Q31__c: "Traumatic Septum Deviation"
+        - Sinus_Q40__c, Sinus_Q41__c: "Left/Right Side Obstruction"
+        - Sinus_Q43__c: "Tumors or Neoplasms"
+        - Sinus_Q42__c: "State of Neoplasm (Benign/Malignant)"
+        - Sinus_Q52__c: "Treatment Status"
+        - Sinus_Q44__c: "Type of Treatments (Radiation/Chemo/X-ray)"
+        - Sinus_Q21__c: "Occupational/Work Impact"
+
+        INPUT DATA FOR AUDIT:
         {data}
 
-        MANDATORY CHECKLIST:
-        1. Mismatched Counts: Scan 'Sinus_Q10c__c' (History) for numbers (e.g. "two", "2"). Compare this to the count of medications provided in 'Sinus_Q11aaa__c', 'Sinus_Q11aba__c', 'Sinus_Q11aca__c'.
-           - IF USER SAYS "I take two" BUT ONLY LISTS 0 OR 1, YOU MUST FLAG THIS.
-        2. Unchecked Symptoms: If 'Sinus_Q14__c' mentions specific issues like 'pus', 'pain', or 'headaches', but those boxes are NOT checked in 'Sinus_Q12__c', flag it.
-        3. Rating Trap: If 'Sinus_Q16__c' is '0' but text describes being unable to work or bed rest, warn the user.
-        4. Empty Fields: If surgery is checked but 'Findings' text is empty, flag it.
+        MANDATORY AUDIT RULES:
+        1. NO TECHNICAL KEYS: You must use the names from the DICTIONARY (e.g., say "Medication #2 Name" instead of "Sinus_Q11aba__c").
+        2. COUNT VERIFICATION: If "Brief History" mentions X meds, verify that X amount of "Medication Name" fields actually contain text. 
+        3. SYMPTOM RECONCILIATION: Check if "Selected Symptoms" matches the narrative in "Detailed Symptom Description".
+        4. RATING TRAP: If "Incapacitating Episodes" is 0 but "Brief History" or "Work Impact" describes bed rest, flag the discrepancy.
 
-        OUTPUT STRUCTURE:
+        RESPONSE FORMAT:
         ### 🚩 LOGICAL CONFLICTS
-        - [Specific mismatch]
+        - [Specific mismatch using human labels]
+        
         ### 💡 MISSING DETAILS
-        - [Checked boxes with no text]
+        - [Identify gaps using human labels]
+        
         ### 🩺 CLINICAL REFINEMENT
-        - [User Term] -> [Clinical Term]
+        - [Suggest VA clinical terms for the specific descriptions provided]
         """
+        
         headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
         payload = {
             "model": self.model,
-            "messages": [{"role": "system", "content": "You are a literal data validator. No summaries."},
-                         {"role": "user", "content": prompt}],
+            "messages": [
+                {"role": "system", "content": "You are a professional medical auditor. Use human-readable field labels provided in the dictionary mapping."},
+                {"role": "user", "content": prompt}
+            ],
             "temperature": 0.0
         }
         try:
             res = requests.post(self.url, json=payload, headers=headers, timeout=25)
             return res.json()['choices'][0]['message']['content']
-        except:
-            return "❌ Groq Connection Error."
+        except Exception as e:
+            return f"❌ Groq Error: {str(e)}"
 
 st.set_page_config(page_title="Complete Sinusitis DBQ", layout="wide")
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
