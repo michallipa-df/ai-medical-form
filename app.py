@@ -2,21 +2,81 @@ import streamlit as st
 import json
 import requests
 
-# --- MAPPING: TECHNICAL KEYS TO HUMAN QUESTIONS (Based on vet1.json) ---
+# --- 1. MASTER FIELD LIST (Defines Order & Completeness) ---
+# This ensures every single field appears in the JSON in this exact order, even if hidden.
+ALL_KEYS_ORDERED = [
+    "Sinusitis__c.Sinusitis_1a__c",
+    "Sinusitis__c.Sinus_Q10c__c",
+    "Sinusitis__c.Sinus_Q11__c",
+    "Sinusitis__c.Sinus_Q11a__c",
+    "Sinusitis__c.Sinus_Q11aaa__c", "Sinusitis__c.Sinus_Q11aab__c", "Sinusitis__c.Sinus_Q11aac__c",
+    "Sinusitis__c.Sinus_Q11aba__c", "Sinusitis__c.Sinus_Q11abb__c", "Sinusitis__c.Sinus_Q11abc__c",
+    "Sinusitis__c.Sinus_Q11aca__c", "Sinusitis__c.Sinus_Q11acb__c", "Sinusitis__c.Sinus_Q11acc__c",
+    "Sinusitis__c.Sinus_Q11b__c",
+    "Sinusitis__c.Sinus_Q48__c",
+    "Sinusitis__c.Sinus_Q34__c",
+    "Sinusitis__c.Sinus_Q12__c",
+    "Sinusitis__c.Sinus_Q13__c",
+    "Sinusitis__c.Sinus_Q14__c",
+    "Sinusitis__c.Sinus_Q15__c",
+    "Sinusitis__c.Sinus_Q16__c",
+    "Sinusitis__c.Sinus_Q17__c",
+    "Sinusitis__c.Sinus_Q17a__c",
+    "Sinusitis__c.Sinus_Q17aaa__c", "Sinusitis__c.Sinus_Q17aaa1__c", "Sinusitis__c.Sinus_Q17aab__c",
+    "Sinusitis__c.Sinus_Q17aba__c", "Sinusitis__c.Sinus_Q17aba1__c", "Sinusitis__c.Sinus_Q17abb__c",
+    "Sinusitis__c.Sinus_Q17abc__c", "Sinusitis__c.Sinus_Q17abc1__c", "Sinusitis__c.Sinus_Q17aca__c",
+    "Sinusitis__c.Sinus_Q17acb__c", "Sinusitis__c.Sinus_Q17acb1__c", "Sinusitis__c.Sinus_Q17acc__c",
+    "Sinusitis__c.Sinus_Q17b__c",
+    "Sinusitis__c.Sinus_Q17c__c",
+    "Sinusitis__c.Sinus_Q17d__c",
+    "Sinusitis__c.Sinus_Q20__c",
+    "Sinusitis__c.Sinus_Q20a__c",
+    "Sinusitis__c.Sinus_Q20b__c",
+    "Sinusitis__c.Sinus_Q20c__c",
+    "Sinusitis__c.Sinus_Q20d__c",
+    "Sinusitis__c.Sinus_Q35__c",
+    "Sinusitis__c.Sinus_Q35a__c", "Sinusitis__c.Sinus_Q35b__c", "Sinusitis__c.Sinus_Q35c__c",
+    "Sinusitis__c.Sinus_Q36__c",
+    "Sinusitis__c.Sinus_Q36a__c", "Sinusitis__c.Sinus_Q36b__c",
+    "Sinusitis__c.Sinus_Q36c__c",
+    "Sinusitis__c.Sinus_Q36d__c",
+    "Sinusitis__c.Sinus_Q36e__c", "Sinusitis__c.Sinus_Q36f__c",
+    "Sinusitis__c.Sinus_Q36g__c",
+    "Sinusitis__c.Sinus_Q36h__c", "Sinusitis__c.Sinus_Q37__c", "Sinusitis__c.Sinus_Q37a__c",
+    "Sinusitis__c.Sinus_Q38__c", "Sinusitis__c.Sinus_Q38a__c",
+    "Sinusitis__c.Sinus_Q39__c",
+    "Sinusitis__c.Sinus_Q39a__c", "Sinusitis__c.Sinus_Q39b__c", "Sinusitis__c.Sinus_Q39c__c", "Sinusitis__c.Sinus_Q39d__c",
+    "Sinusitis__c.Sinus_Q30__c",
+    "Sinusitis__c.Sinus_Q31__c",
+    "Sinusitis__c.Sinus_Q40__c",
+    "Sinusitis__c.Sinus_Q41__c",
+    "Sinusitis__c.Sinus_Q32__c",
+    "Sinusitis__c.Sinus_Q43__c",
+    "Sinusitis__c.Sinus_Q42__c",
+    "Sinusitis__c.Sinus_Q49__c",
+    "Sinusitis__c.Sinus_Q50__c",
+    "Sinusitis__c.Sinus_Q51__c",
+    "Sinusitis__c.Sinus_Q52__c",
+    "Sinusitis__c.Sinus_Q44__c",
+    "Sinusitis__c.Sinus_Q53__c", "Sinusitis__c.Sinus_Q54__c",
+    "Sinusitis__c.Sinus_Q55__c", "Sinusitis__c.Sinus_Q56__c",
+    "Sinusitis__c.Sinus_Q45__c",
+    "Sinusitis__c.Sinus_Q46__c", "Sinusitis__c.Sinus_Q47__c",
+    "Sinusitis__c.Sinus_Q42e__c",
+    "Sinusitis__c.Sinus_Q21__c",
+    "Sinusitis__c.DBQ__c.Veteran_Name_Text__c",
+    "Sinusitis__c.Date_Submitted__c"
+]
+
+# --- 2. QUESTION TEXT MAPPING (Matches vet1.json) ---
 QUESTION_MAP = {
     "Sinusitis_1a__c": "Are you applying for an initial claim or a re-evaluation?",
     "Sinus_Q10c__c": "Brief history of sinus condition",
     "Sinus_Q11__c": "Do you currently take any medication?",
     "Sinus_Q11a__c": "How many medications do you take?",
-    "Sinus_Q11aaa__c": "Medication #1 Name",
-    "Sinus_Q11aab__c": "Medication #1 Dosage",
-    "Sinus_Q11aac__c": "Medication #1 Frequency",
-    "Sinus_Q11aba__c": "Medication #2 Name",
-    "Sinus_Q11abb__c": "Medication #2 Dosage",
-    "Sinus_Q11abc__c": "Medication #2 Frequency",
-    "Sinus_Q11aca__c": "Medication #3 Name",
-    "Sinus_Q11acb__c": "Medication #3 Dosage",
-    "Sinus_Q11acc__c": "Medication #3 Frequency",
+    "Sinus_Q11aaa__c": "Medication #1 Name", "Sinus_Q11aab__c": "Medication #1 Dosage", "Sinus_Q11aac__c": "Medication #1 Frequency",
+    "Sinus_Q11aba__c": "Medication #2 Name", "Sinus_Q11abb__c": "Medication #2 Dosage", "Sinus_Q11abc__c": "Medication #2 Frequency",
+    "Sinus_Q11aca__c": "Medication #3 Name", "Sinus_Q11acb__c": "Medication #3 Dosage", "Sinus_Q11acc__c": "Medication #3 Frequency",
     "Sinus_Q11b__c": "Additional medications list",
     "Sinus_Q48__c": "Seeking service connection?",
     "Sinus_Q34__c": "Sinuses currently affected",
@@ -27,9 +87,10 @@ QUESTION_MAP = {
     "Sinus_Q16__c": "Incapacitating episodes (12mo)",
     "Sinus_Q17__c": "Have you had sinus surgery?",
     "Sinus_Q17a__c": "Number of sinus surgeries",
-    "Sinus_Q17aaa__c": "Most recent surgery date",
-    "Sinus_Q17aaa1__c": "Most recent surgery type",
-    "Sinus_Q17aab__c": "Surgery findings",
+    "Sinus_Q17aaa__c": "Surgery #1 Date", "Sinus_Q17aaa1__c": "Surgery #1 Type", "Sinus_Q17aab__c": "Surgery #1 Findings",
+    "Sinus_Q17aba__c": "Surgery #2 Date", "Sinus_Q17aba1__c": "Surgery #2 Type", "Sinus_Q17abb__c": "Surgery #2 Findings",
+    "Sinus_Q17abc__c": "Surgery #3 Date", "Sinus_Q17abc1__c": "Surgery #3 Type", "Sinus_Q17aca__c": "Surgery #3 Findings",
+    "Sinus_Q17acb__c": "Surgery #4 Date", "Sinus_Q17acb1__c": "Surgery #4 Type", "Sinus_Q17acc__c": "Surgery #4 Findings",
     "Sinus_Q17b__c": "Additional surgery details",
     "Sinus_Q17c__c": "Sinuses operated on",
     "Sinus_Q17d__c": "Side operated on",
@@ -85,7 +146,7 @@ QUESTION_MAP = {
     "Date_Submitted__c": "Date Submitted"
 }
 
-# --- GROQ AI AUDITOR (UPDATED WITH HUMAN MAPPING) ---
+# --- GROQ AI AUDITOR ---
 class GroqMedicalAuditor:
     def __init__(self, api_key, model="llama-3.3-70b-versatile"):
         self.url = "https://api.groq.com/openai/v1/chat/completions"
@@ -96,46 +157,37 @@ class GroqMedicalAuditor:
         if not self.api_key:
             return "❌ Groq API Key missing in Secrets."
 
-        # Convert keys to Human Readable for the AI Prompt
+        # Convert to readable format for AI
         readable_data = {}
         for k, v in data.items():
             core_key = k.replace("Sinusitis__c.", "")
             label = QUESTION_MAP.get(core_key, core_key)
-            readable_data[label] = v
+            if v is not None: # Only show answered fields to AI to reduce noise
+                readable_data[label] = v
 
         prompt = f"""
-        [SYSTEM: YOU ARE A VA CLAIMS AUDITOR. USE THE PROVIDED HUMAN LABELS. FIND CONTRADICTIONS.]
-        
+        [SYSTEM: VA CLAIMS AUDITOR. USE HUMAN LABELS. FIND CONTRADICTIONS.]
         INPUT DATA:
         {json.dumps(readable_data, indent=2)}
 
         MANDATORY AUDIT PROTOCOL:
-        1. MEDICATION COUNT: 
-           - Compare 'How many medications do you take?' against the actual text in 'Medication #1 Name', 'Medication #2 Name', etc.
-           - Check 'Brief history of sinus condition' for mentioned numbers (e.g. "I take two pills").
-           - IF counts don't match, FLAG IT. (e.g., User selected "2" but listed 0).
-
-        2. SYMPTOM MATCHING:
-           - Compare 'Symptoms checklist' against 'Detailed symptom description'.
-           - IF a box is checked (e.g., 'Sinus pain') but not mentioned in the description, FLAG IT.
-
-        3. RATING TRAP:
-           - Check 'Incapacitating episodes (12mo)'.
-           - IF count is '0' but 'Detailed symptom description' or 'Occupational Impact' mentions "bed rest" or "missing work", FLAG IT as a rating risk.
+        1. MEDICATION COUNT: If 'Brief history' or 'Number of Medications' says "2" but only 1 'Medication Name' is listed, FLAG IT.
+        2. SYMPTOM MATCH: If 'Symptoms checklist' has checked items not described in 'Detailed symptom description', FLAG IT.
+        3. RATING TRAP: If 'Incapacitating episodes' is 0 but text describes bed rest/missing work, FLAG IT.
 
         OUTPUT FORMAT:
         ### 🚩 LOGICAL CONFLICTS
-        - [State the conflict using the human labels]
+        - [Conflict]
         ### 💡 MISSING DETAILS
-        - [Identify checked items missing descriptions]
+        - [Gap]
         ### 🩺 CLINICAL REFINEMENT
-        - [Suggest clearer medical terms]
+        - [Suggestion]
         """
         
         headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
         payload = {
             "model": self.model,
-            "messages": [{"role": "system", "content": "You are a literal data validator. Use human labels."},
+            "messages": [{"role": "system", "content": "You are a literal data validator."},
                          {"role": "user", "content": prompt}],
             "temperature": 0.0
         }
@@ -145,6 +197,7 @@ class GroqMedicalAuditor:
         except Exception as e:
             return f"❌ Groq Error: {str(e)}"
 
+# --- APP START ---
 st.set_page_config(page_title="Complete Sinusitis DBQ", layout="wide")
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
 auditor = GroqMedicalAuditor(GROQ_API_KEY)
@@ -159,11 +212,10 @@ claim_selection = st.selectbox(
 )
 
 if claim_selection != "--select an item--":
-    h_label = "Briefly describe the history of your sinus condition, including how and when your symptoms began and the link between your injury and military service." if claim_selection == "Initial Claim" else "Briefly describe the history of your sinus condition, including how and when your symptoms began:"
+    h_label = "Briefly describe the history..." if claim_selection == "Initial Claim" else "Briefly describe the history..."
     st.markdown(f"**{h_label}**")
     st.text_area("History Area", key="Sinusitis__c.Sinus_Q10c__c", label_visibility="collapsed")
 
-    # Medication Tree
     st.markdown("---")
     med_trigger = st.radio("Do you currently take any medication(s)? *", ["Yes", "No"], index=1, horizontal=True, key="Sinusitis__c.Sinus_Q11__c")
     if med_trigger == "Yes":
@@ -181,9 +233,8 @@ if claim_selection != "--select an item--":
                     with c2: st.text_input("Dosage", key=dose_key)
                     with c3: st.text_input("Frequency", key=freq_key)
             if num_meds == "More than 3":
-                st.text_area("List each additional medication(s) AND dosages/frequency:", key="Sinusitis__c.Sinus_Q11b__c")
+                st.text_area("List additional medications:", key="Sinusitis__c.Sinus_Q11b__c")
 
-    # Service Connection Branch
     st.markdown("---")
     sc_trigger = st.radio("Are you service connected or seeking service connection for Sinusitis? *", ["Yes", "No"], index=1, horizontal=True, key="Sinusitis__c.Sinus_Q48__c")
     if sc_trigger == "Yes":
@@ -192,12 +243,10 @@ if claim_selection != "--select an item--":
         
         if "Near Constant Sinusitis" in symp_list:
             st.selectbox("Near constant sinusitis frequency: *", ["Daily", "5-6 days per week", "3-4 days per week"], key="Sinusitis__c.Sinus_Q13__c")
-        
         st.text_area("Please describe the symptoms you selected in detail: *", key="Sinusitis__c.Sinus_Q14__c")
         st.selectbox("Non-incapacitating episodes (last 12 months): *", ["1", "2", "3", "4", "5", "6", "7 or more"], key="Sinusitis__c.Sinus_Q15__c")
         st.selectbox("Incapacitating episodes (last 12 months): *", ["0", "1", "2", "3 or more"], key="Sinusitis__c.Sinus_Q16__c")
 
-        # Surgery Tree
         surg_trigger = st.radio("Have you ever had sinus surgery? *", ["Yes", "No"], index=1, horizontal=True, key="Sinusitis__c.Sinus_Q17__c")
         if surg_trigger == "Yes":
             num_surg = st.selectbox("How many sinus surgeries have you had?", ["1", "2", "3", "4", "More than 4"], key="Sinusitis__c.Sinus_Q17a__c")
@@ -218,7 +267,6 @@ if claim_selection != "--select an item--":
             st.multiselect("Sinus operated on:", ["Maxillary", "Frontal", "Ethmoid", "Sphenoid", "Pansinusitus", "Unknown"], key="Sinusitis__c.Sinus_Q17c__c")
             st.selectbox("Side operated on:", ["Left", "Right", "Both"], key="Sinusitis__c.Sinus_Q17d__c")
 
-# --- SECTION 2: Rhinitis (ffSection1) ---
 st.header("Rhinitis")
 if st.radio("Seeking connection for rhinitis? *", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q20__c") == "Yes":
     st.radio("Blockage in >50% both nasal passages?", ["Yes", "No"], key="Sinusitis__c.Sinus_Q20a__c")
@@ -226,7 +274,6 @@ if st.radio("Seeking connection for rhinitis? *", ["Yes", "No"], index=1, key="S
     st.radio("Permanent enlargement of nasal turbinates?", ["Yes", "No"], key="Sinusitis__c.Sinus_Q20c__c")
     st.radio("Diagnosed with nasal polyps?", ["Yes", "No"], key="Sinusitis__c.Sinus_Q20d__c")
 
-# --- SECTION 3: Larynx/Pharynx (ffSection4) ---
 st.header("Larynx and Pharynx Conditions")
 if st.radio("Do you have chronic laryngitis? *", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q35__c") == "Yes":
     lar_s = st.multiselect("Symptoms:", ["Hoarseness", "Inflammation", "Polyps", "Other"], key="Sinusitis__c.Sinus_Q35a__c")
@@ -255,7 +302,6 @@ if st.radio("Injury to pharynx? *", ["Yes", "No"], index=1, key="Sinusitis__c.Si
     st.multiselect("Symptoms:", ["Obstruction", "Stricture", "Speech impairment", "Other"], key="Sinusitis__c.Sinus_Q39a__c")
     st.radio("Vocal cord paralysis? *", ["Yes", "No"], key="Sinusitis__c.Sinus_Q39c__c")
 
-# --- SECTION 4: Deviated Septum (ffSection3) ---
 st.header("Deviated Septum")
 if st.radio("Seeking connection for deviated septum? *", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q30__c") == "Yes":
     st.radio("Is it traumatic?", ["Yes", "No"], key="Sinusitis__c.Sinus_Q31__c")
@@ -263,7 +309,6 @@ if st.radio("Seeking connection for deviated septum? *", ["Yes", "No"], index=1,
     st.radio("Complete obstruction Right side?", ["Yes", "No"], key="Sinusitis__c.Sinus_Q41__c")
     st.radio(">50% obstruction both sides?", ["Yes", "No"], key="Sinusitis__c.Sinus_Q32__c")
 
-# --- SECTION 5: Tumors (ffSection5) ---
 st.header("Tumors/Neoplasms")
 if st.radio("Tumors related to above conditions? *", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q43__c") == "Yes":
     tum_state = st.selectbox("State:", ["Benign", "Malignant"], key="Sinusitis__c.Sinus_Q42__c")
@@ -271,7 +316,6 @@ if st.radio("Tumors related to above conditions? *", ["Yes", "No"], index=1, key
         st.selectbox("Status:", ["Active", "Remission"], key="Sinusitis__c.Sinus_Q49__c")
         if st.selectbox("Type:", ["Primary", "Secondary"], key="Sinusitis__c.Sinus_Q50__c") == "Secondary":
             st.text_area("Primary site:", key="Sinusitis__c.Sinus_Q51__c")
-
     tr_status = st.selectbox("Treatment status:", ["Yes - Current", "Yes - Completed", "No"], key="Sinusitis__c.Sinus_Q52__c")
     if tr_status != "No":
         t_t = st.multiselect("Treatments:", ["Radiation", "Chemotherapy", "X-ray", "Other"], key="Sinusitis__c.Sinus_Q44__c")
@@ -282,7 +326,6 @@ if st.radio("Tumors related to above conditions? *", ["Yes", "No"], index=1, key
             st.date_input("Recent chemo", key="Sinusitis__c.Sinus_Q55__c")
             st.date_input("Chemo completion", key="Sinusitis__c.Sinus_Q56__c")
         if "Other" in t_t: st.text_area("Describe other treatments:", key="Sinusitis__c.Sinus_Q45__c")
-
     if st.radio("Had surgery on neoplasm?", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q46__c") == "Yes":
         st.text_area("Neoplasm surgery description:", key="Sinusitis__c.Sinus_Q47__c")
 
@@ -292,7 +335,7 @@ st.text_area("Sinusitis impact on occupational tasks: *", key="Sinusitis__c.Sinu
 st.text_input("Veteran Name: *", key="Sinusitis__c.DBQ__c.Veteran_Name_Text__c")
 st.text_input("Date Submitted (MM/DD/YYYY): *", key="Sinusitis__c.Date_Submitted__c")
 
-# --- AI AUDITOR CROSS-CHECK ---
+# --- AI AUDIT TRIGGER ---
 st.divider()
 if st.button("🔍 Run Logical Cross-Check (Groq AI)"):
     all_form_data = {k: v for k, v in st.session_state.items() if "Sinusitis__c" in str(k)}
@@ -301,19 +344,23 @@ if st.button("🔍 Run Logical Cross-Check (Groq AI)"):
         st.sidebar.markdown("### 🩺 Auditor Results")
         st.sidebar.markdown(audit_feedback)
 
-# --- TAILORED DOWNLOAD LOGIC (Matches vet1.json) ---
+# --- TAILORED ORDERED DOWNLOAD LOGIC (Matches vet1.json) ---
 def generate_tailored_json():
-    # Only create DPA structure, map keys to Question text, remove metadata
     output = {"DPA": {}}
-    for k, v in st.session_state.items():
-        if "Sinusitis__c" in str(k):
-            core_key = k.replace("Sinusitis__c.", "")
-            # If key not in map, use the core_key as Question
-            question_text = QUESTION_MAP.get(core_key, core_key)
-            output["DPA"][core_key] = {
-                "Question": question_text,
-                "Answer": v
-            }
+    # Iterate through MASTER LIST to ensure Order & Completeness (including Nulls)
+    for key in ALL_KEYS_ORDERED:
+        core_key = key.replace("Sinusitis__c.", "")
+        # Get value if exists in session, else None
+        value = st.session_state.get(key, None)
+        
+        # Logic to handle date objects for JSON serialization
+        if value and hasattr(value, 'isoformat'):
+            value = value.isoformat()
+            
+        output["DPA"][core_key] = {
+            "Question": QUESTION_MAP.get(core_key, core_key),
+            "Answer": value
+        }
     return json.dumps(output, indent=4)
 
 st.download_button(
