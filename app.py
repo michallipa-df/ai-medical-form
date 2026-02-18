@@ -1,9 +1,11 @@
 import streamlit as st
 import json
 import requests
+import random
+import string
+from datetime import date
 
 # --- 1. MASTER FIELD LIST (Defines Order & Completeness) ---
-# This ensures every single field appears in the JSON in this exact order, even if hidden.
 ALL_KEYS_ORDERED = [
     "Sinusitis__c.Sinusitis_1a__c",
     "Sinusitis__c.Sinus_Q10c__c",
@@ -68,7 +70,7 @@ ALL_KEYS_ORDERED = [
     "Sinusitis__c.Date_Submitted__c"
 ]
 
-# --- 2. QUESTION TEXT MAPPING (Matches vet1.json) ---
+# --- 2. QUESTION TEXT MAPPING ---
 QUESTION_MAP = {
     "Sinusitis_1a__c": "Are you applying for an initial claim or a re-evaluation?",
     "Sinus_Q10c__c": "Brief history of sinus condition",
@@ -157,12 +159,12 @@ class GroqMedicalAuditor:
         if not self.api_key:
             return "❌ Groq API Key missing in Secrets."
 
-        # Convert to readable format for AI
+        # Filter: Only show active fields to AI to keep prompt clean
         readable_data = {}
         for k, v in data.items():
-            core_key = k.replace("Sinusitis__c.", "")
-            label = QUESTION_MAP.get(core_key, core_key)
-            if v is not None: # Only show answered fields to AI to reduce noise
+            if v is not None:
+                core_key = k.replace("Sinusitis__c.", "")
+                label = QUESTION_MAP.get(core_key, core_key)
                 readable_data[label] = v
 
         prompt = f"""
@@ -216,6 +218,7 @@ if claim_selection != "--select an item--":
     st.markdown(f"**{h_label}**")
     st.text_area("History Area", key="Sinusitis__c.Sinus_Q10c__c", label_visibility="collapsed")
 
+    # Medication Tree
     st.markdown("---")
     med_trigger = st.radio("Do you currently take any medication(s)? *", ["Yes", "No"], index=1, horizontal=True, key="Sinusitis__c.Sinus_Q11__c")
     if med_trigger == "Yes":
@@ -235,6 +238,7 @@ if claim_selection != "--select an item--":
             if num_meds == "More than 3":
                 st.text_area("List additional medications:", key="Sinusitis__c.Sinus_Q11b__c")
 
+    # Service Connection Branch
     st.markdown("---")
     sc_trigger = st.radio("Are you service connected or seeking service connection for Sinusitis? *", ["Yes", "No"], index=1, horizontal=True, key="Sinusitis__c.Sinus_Q48__c")
     if sc_trigger == "Yes":
@@ -247,6 +251,7 @@ if claim_selection != "--select an item--":
         st.selectbox("Non-incapacitating episodes (last 12 months): *", ["1", "2", "3", "4", "5", "6", "7 or more"], key="Sinusitis__c.Sinus_Q15__c")
         st.selectbox("Incapacitating episodes (last 12 months): *", ["0", "1", "2", "3 or more"], key="Sinusitis__c.Sinus_Q16__c")
 
+        # Surgery Tree
         surg_trigger = st.radio("Have you ever had sinus surgery? *", ["Yes", "No"], index=1, horizontal=True, key="Sinusitis__c.Sinus_Q17__c")
         if surg_trigger == "Yes":
             num_surg = st.selectbox("How many sinus surgeries have you had?", ["1", "2", "3", "4", "More than 4"], key="Sinusitis__c.Sinus_Q17a__c")
@@ -344,12 +349,22 @@ if st.button("🔍 Run Logical Cross-Check (Groq AI)"):
         st.sidebar.markdown("### 🩺 Auditor Results")
         st.sidebar.markdown(audit_feedback)
 
-# --- TAILORED ORDERED DOWNLOAD LOGIC (Matches vet1.json) ---
+# --- TAILORED ORDERED DOWNLOAD LOGIC ---
 def generate_tailored_json():
-    output = {"DPA": {}}
-    # Iterate through MASTER LIST to ensure Order & Completeness (including Nulls)
+    # 1. Generate Case ID
+    case_id = ''.join(random.choices(string.digits, k=6))
+    
+    # 2. Start Output Structure
+    output = {
+        "caseID": case_id,
+        "DBQType": "sinus",
+        "DPA": {}
+    }
+    
+    # 3. Iterate through MASTER LIST to ensure Order & Completeness (including Nulls)
     for key in ALL_KEYS_ORDERED:
         core_key = key.replace("Sinusitis__c.", "")
+        
         # Get value if exists in session, else None
         value = st.session_state.get(key, None)
         
@@ -361,6 +376,7 @@ def generate_tailored_json():
             "Question": QUESTION_MAP.get(core_key, core_key),
             "Answer": value
         }
+        
     return json.dumps(output, indent=4)
 
 st.download_button(
