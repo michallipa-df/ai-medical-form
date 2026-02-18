@@ -229,17 +229,26 @@ def upload_to_source(json_data, filename):
         st.error(f"S3 Upload Error: {e}")
         return False
 
-def poll_output_bucket(filename, timeout=60):
-    """Polls ree-dbq-gen-output-test/ for the same filename."""
+def poll_output_bucket(filename, initial_wait=90, timeout=180):
+    """
+    Waits initial_wait seconds, then polls ree-dbq-gen-output-test/ for the file.
+    timeout is the total time allowed AFTER the initial wait.
+    """
     s3 = get_s3_client()
+    # Ensure this secret key exists in your .streamlit/secrets.toml
     output_bucket = st.secrets["aws"]["OUTPUT_BUCKET_NAME"]
     
-    start_time = time.time()
+    # 1. The Smart Wait
     placeholder = st.empty()
+    for i in range(initial_wait, 0, -1):
+        placeholder.info(f"⏳ AWS is processing... polling will start in {i} seconds.")
+        time.sleep(1)
     
+    # 2. The Active Poll
+    start_time = time.time()
     while time.time() - start_time < timeout:
         try:
-            placeholder.info(f"⏳ Waiting for AWS processing... ({int(time.time() - start_time)}s)")
+            placeholder.info(f"🔄 Checking S3 for result... ({int(time.time() - start_time)}s elapsed)")
             
             # Check for file
             response = s3.get_object(Bucket=output_bucket, Key=filename)
@@ -249,8 +258,9 @@ def poll_output_bucket(filename, timeout=60):
             return json.loads(file_content)
             
         except ClientError as e:
+            # If file not found, wait 5s and try again
             if e.response['Error']['Code'] == "NoSuchKey":
-                time.sleep(3) # Wait and retry
+                time.sleep(5) 
             else:
                 placeholder.error(f"S3 Error: {e}")
                 return None
