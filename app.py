@@ -4,11 +4,10 @@ import requests
 import random
 import string
 import boto3
-from botocore.exceptions import NoCredentialsError
-from datetime import date
+import time
+from botocore.exceptions import NoCredentialsError, ClientError
 
 # --- 1. MASTER FIELD LIST (Defines Order & Completeness) ---
-# This ensures every single field appears in the JSON in this exact order.
 ALL_KEYS_ORDERED = [
     "Sinusitis__c.Sinusitis_1a__c",
     "Sinusitis__c.Sinus_Q10c__c",
@@ -73,7 +72,7 @@ ALL_KEYS_ORDERED = [
     "Sinusitis__c.Date_Submitted__c"
 ]
 
-# --- 2. QUESTION TEXT MAPPING (Matches vet1.json) ---
+# --- 2. QUESTION TEXT MAPPING ---
 QUESTION_MAP = {
     "Sinusitis_1a__c": "Are you applying for an initial claim or a re-evaluation?",
     "Sinus_Q10c__c": "Brief history of sinus condition",
@@ -202,25 +201,23 @@ class GroqMedicalAuditor:
         except Exception as e:
             return f"❌ Groq Error: {str(e)}"
 
-# --- S3 UPLOAD FUNCTION ---
-def upload_to_s3(json_data, filename):
+# --- AWS S3 FUNCTIONS ---
+
+def get_s3_client():
+    """Helper to get S3 client from secrets."""
+    return boto3.client(
+        's3',
+        aws_access_key_id=st.secrets["aws"]["ACCESS_KEY"],
+        aws_secret_access_key=st.secrets["aws"]["SECRET_KEY"],
+    )
+
+def upload_to_source(json_data, filename):
+    """Uploads to ree-dbq-gen-source-test/source_files/"""
     try:
-        # Get secrets
-        aws_access_key = st.secrets["aws"]["ACCESS_KEY"]
-        aws_secret_key = st.secrets["aws"]["SECRET_KEY"]
-        bucket_name = st.secrets["aws"]["BUCKET_NAME"]
+        s3 = get_s3_client()
+        bucket_name = st.secrets["aws"]["BUCKET_NAME"] # Input Bucket
+        s3_key = f"source_files/{filename}"
         
-        # Hardcode folder path as per requirement
-        folder_path = "source_files/"
-        s3_key = f"{folder_path}{filename}"
-        
-        s3 = boto3.client(
-            's3',
-            aws_access_key_id=aws_access_key,
-            aws_secret_access_key=aws_secret_key,
-        )
-        
-        # Upload
         s3.put_object(
             Bucket=bucket_name, 
             Key=s3_key, 
@@ -231,6 +228,38 @@ def upload_to_s3(json_data, filename):
     except Exception as e:
         st.error(f"S3 Upload Error: {e}")
         return False
+
+def poll_output_bucket(filename, timeout=60):
+    """Polls ree-dbq-gen-output-test/ for the same filename."""
+    s3 = get_s3_client()
+    output_bucket = st.secrets["aws"]["OUTPUT_BUCKET_NAME"]
+    
+    start_time = time.time()
+    placeholder = st.empty()
+    
+    while time.time() - start_time < timeout:
+        try:
+            placeholder.info(f"⏳ Waiting for AWS processing... ({int(time.time() - start_time)}s)")
+            
+            # Check for file
+            response = s3.get_object(Bucket=output_bucket, Key=filename)
+            file_content = response['Body'].read().decode('utf-8')
+            
+            placeholder.success("✅ Processing Complete! Result received.")
+            return json.loads(file_content)
+            
+        except ClientError as e:
+            if e.response['Error']['Code'] == "NoSuchKey":
+                time.sleep(3) # Wait and retry
+            else:
+                placeholder.error(f"S3 Error: {e}")
+                return None
+        except Exception as e:
+            placeholder.error(f"Error: {e}")
+            return None
+            
+    placeholder.error("❌ Timeout: AWS took too long to process the file.")
+    return None
 
 # --- APP START ---
 st.set_page_config(page_title="Complete Sinusitis DBQ", layout="wide")
@@ -384,39 +413,26 @@ if st.button("🔍 Run Logical Cross-Check (Groq AI)"):
 
 # --- TAILORED ORDERED DOWNLOAD LOGIC ---
 def generate_tailored_json():
-    # 1. Generate Case ID
     case_id = ''.join(random.choices(string.digits, k=6))
-    
-    # 2. Start Output Structure
     output = {
         "caseID": case_id,
         "DBQType": "sinus",
         "DPA": {}
     }
-    
-    # 3. Iterate through MASTER LIST to ensure Order & Completeness (including Nulls)
     for key in ALL_KEYS_ORDERED:
         core_key = key.replace("Sinusitis__c.", "")
-        
-        # Get value if exists in session, else None
         value = st.session_state.get(key, None)
-        
-        # Logic to handle date objects for JSON serialization
         if value and hasattr(value, 'isoformat'):
             value = value.isoformat()
-            
         output["DPA"][core_key] = {
             "Question": QUESTION_MAP.get(core_key, core_key),
             "Answer": value
         }
-        
     return json.dumps(output, indent=4)
 
 st.divider()
-
 col1, col2 = st.columns(2)
 
-# Generate the data once
 json_string = generate_tailored_json()
 json_data = json.loads(json_string)
 filename = f"DBQ_Sinus_{json_data['caseID']}.json"
@@ -430,8 +446,23 @@ with col1:
     )
 
 with col2:
-    if st.button("☁️ Save to Secure Cloud (S3)"):
-        with st.spinner("Encrypting and uploading to AWS S3..."):
-            success = upload_to_s3(json_string, filename)
+    if st.button("☁️ Process on AWS Cloud"):
+        with st.status("Uploading to S3...", expanded=True) as status:
+            success = upload_to_source(json_string, filename)
+            
             if success:
-                st.success(f"✅ Successfully saved Case {json_data['caseID']} to S3!")
+                status.write("✅ Upload complete. Triggering AWS job...")
+                status.write(f"⏳ Polling output bucket for '{filename}'...")
+                
+                # Poll Output Bucket
+                result_data = poll_output_bucket(filename)
+                
+                if result_data:
+                    status.update(label="Processing Complete!", state="complete", expanded=False)
+                    st.divider()
+                    st.subheader("🎉 AWS Processing Result")
+                    st.json(result_data)
+                else:
+                    status.update(label="Processing Failed or Timed Out", state="error")
+            else:
+                status.update(label="Upload Failed", state="error")
