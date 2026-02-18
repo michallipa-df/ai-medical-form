@@ -229,7 +229,7 @@ def upload_to_source(json_data, filename):
         st.error(f"S3 Upload Error: {e}")
         return False
 
-def poll_output_bucket(filename, initial_wait=90, timeout=180):
+def poll_output_bucket(filename, initial_wait=30, timeout=180):
     """
     Waits initial_wait seconds, then polls ree-dbq-gen-output-test/ for the file.
     timeout is the total time allowed AFTER the initial wait.
