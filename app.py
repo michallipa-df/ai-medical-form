@@ -3,9 +3,12 @@ import json
 import requests
 import random
 import string
+import boto3
+from botocore.exceptions import NoCredentialsError
 from datetime import date
 
 # --- 1. MASTER FIELD LIST (Defines Order & Completeness) ---
+# This ensures every single field appears in the JSON in this exact order.
 ALL_KEYS_ORDERED = [
     "Sinusitis__c.Sinusitis_1a__c",
     "Sinusitis__c.Sinus_Q10c__c",
@@ -70,7 +73,7 @@ ALL_KEYS_ORDERED = [
     "Sinusitis__c.Date_Submitted__c"
 ]
 
-# --- 2. QUESTION TEXT MAPPING ---
+# --- 2. QUESTION TEXT MAPPING (Matches vet1.json) ---
 QUESTION_MAP = {
     "Sinusitis_1a__c": "Are you applying for an initial claim or a re-evaluation?",
     "Sinus_Q10c__c": "Brief history of sinus condition",
@@ -198,6 +201,36 @@ class GroqMedicalAuditor:
             return res.json()['choices'][0]['message']['content']
         except Exception as e:
             return f"❌ Groq Error: {str(e)}"
+
+# --- S3 UPLOAD FUNCTION ---
+def upload_to_s3(json_data, filename):
+    try:
+        # Get secrets
+        aws_access_key = st.secrets["aws"]["ACCESS_KEY"]
+        aws_secret_key = st.secrets["aws"]["SECRET_KEY"]
+        bucket_name = st.secrets["aws"]["BUCKET_NAME"]
+        
+        # Hardcode folder path as per requirement
+        folder_path = "source_files/"
+        s3_key = f"{folder_path}{filename}"
+        
+        s3 = boto3.client(
+            's3',
+            aws_access_key_id=aws_access_key,
+            aws_secret_access_key=aws_secret_key,
+        )
+        
+        # Upload
+        s3.put_object(
+            Bucket=bucket_name, 
+            Key=s3_key, 
+            Body=json_data, 
+            ContentType='application/json'
+        )
+        return True
+    except Exception as e:
+        st.error(f"S3 Upload Error: {e}")
+        return False
 
 # --- APP START ---
 st.set_page_config(page_title="Complete Sinusitis DBQ", layout="wide")
@@ -379,9 +412,26 @@ def generate_tailored_json():
         
     return json.dumps(output, indent=4)
 
-st.download_button(
-    label="📥 Download Tailored JSON",
-    data=generate_tailored_json(),
-    file_name="tailored_sinus_dbq.json",
-    mime="application/json"
-)
+st.divider()
+
+col1, col2 = st.columns(2)
+
+# Generate the data once
+json_string = generate_tailored_json()
+json_data = json.loads(json_string)
+filename = f"DBQ_Sinus_{json_data['caseID']}.json"
+
+with col1:
+    st.download_button(
+        label="📥 Download Tailored JSON",
+        data=json_string,
+        file_name=filename,
+        mime="application/json"
+    )
+
+with col2:
+    if st.button("☁️ Save to Secure Cloud (S3)"):
+        with st.spinner("Encrypting and uploading to AWS S3..."):
+            success = upload_to_s3(json_string, filename)
+            if success:
+                st.success(f"✅ Successfully saved Case {json_data['caseID']} to S3!")
