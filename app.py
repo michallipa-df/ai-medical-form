@@ -44,7 +44,7 @@ class GroqMedicalScribe:
                 {"role": "system", "content": "You are a literal data validator returning only JSON."},
                 {"role": "user", "content": prompt}
             ],
-            "response_format": {"type": "json_object"}, # Forces Groq to output clean JSON
+            "response_format": {"type": "json_object"},
             "temperature": 0.0
         }
         
@@ -82,10 +82,7 @@ def upload_to_source(json_data, filename):
         s3_key = f"source_files/{filename}"
         
         s3.put_object(
-            Bucket=bucket_name, 
-            Key=s3_key, 
-            Body=json_data, 
-            ContentType='application/json'
+            Bucket=bucket_name, Key=s3_key, Body=json_data, ContentType='application/json'
         )
         return True
     except Exception as e:
@@ -176,7 +173,7 @@ QUESTION_MAP = {
 # --- APP CONFIG ---
 st.set_page_config(page_title="Sinusitis DBQ Validation", layout="centered")
 
-# Initialize LLM with Groq Secrets
+# Initialize LLM
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
 ai_auditor = GroqMedicalScribe(api_key=GROQ_API_KEY)
 
@@ -185,8 +182,10 @@ if 'step' not in st.session_state:
     st.session_state.step = 1
 if 'form_data' not in st.session_state:
     st.session_state.form_data = {k: None for k in ALL_KEYS_ORDERED}
+if 'current_warning' not in st.session_state:
+    st.session_state.current_warning = None
 
-# 💡 ZMIANA: Pętla przywracająca stan formularza przy przechodzeniu "Wstecz"
+# Restore form state logic
 for key, value in st.session_state.form_data.items():
     if value is not None and key not in st.session_state:
         st.session_state[key] = value
@@ -198,32 +197,81 @@ def save_step_data():
         if key in st.session_state:
             st.session_state.form_data[key] = st.session_state[key]
 
-def get_readable_step_data():
+def get_readable_step_data(global_fetch=False):
     readable_data = {}
     for key in ALL_KEYS_ORDERED:
-        if key in st.session_state and st.session_state[key] not in [None, "", "--select--", "--select an item--"]:
+        if global_fetch:
+            val = st.session_state.form_data.get(key)
+        else:
+            val = st.session_state.get(key)
+            
+        if val not in [None, "", "--select--", "--select an item--"]:
             core_key = key.replace("Sinusitis__c.", "")
             label = QUESTION_MAP.get(core_key, core_key)
-            readable_data[label] = st.session_state[key]
+            readable_data[label] = val
     return readable_data
 
-def handle_next_step(step_name, rules):
+def proceed_to_next():
+    save_step_data()
+    st.session_state.current_warning = None
+    st.session_state.step += 1
+
+def prev_step():
+    save_step_data()
+    st.session_state.current_warning = None
+    st.session_state.step -= 1
+
+def attempt_validation(step_name, rules):
     save_step_data()
     step_data = get_readable_step_data()
-    
     with st.spinner("Assistant is reviewing your answers..."):
         ai_response = ai_auditor.validate_step(step_name, rules, step_data)
         
     if ai_response == "PASS":
-        st.session_state.step += 1
+        proceed_to_next()
         st.rerun()
     else:
-        st.error("Assistant's Suggestion:")
-        st.info(ai_response)
+        st.session_state.current_warning = ai_response
+        st.rerun()
 
-def prev_step():
-    save_step_data()
-    st.session_state.step -= 1
+def render_navigation(step_name, rules, python_validation=None):
+    """Reusable navigation UI that handles Warnings and Continue Anyway logic."""
+    st.divider()
+    col1, col2 = st.columns([1, 4])
+    
+    with col1:
+        if st.button("Back", use_container_width=True):
+            prev_step()
+            st.rerun()
+            
+    with col2:
+        if st.session_state.current_warning:
+            st.warning(f"**Assistant's Note:**\n\n{st.session_state.current_warning}")
+            st.info("You can fix the error and click 'Re-evaluate', or force continue.")
+            
+            btn_col1, btn_col2 = st.columns(2)
+            with btn_col1:
+                if st.button("Re-evaluate (I fixed it)", type="primary", use_container_width=True):
+                    if python_validation:
+                        err = python_validation()
+                        if err:
+                            st.session_state.current_warning = err
+                            st.rerun()
+                            return
+                    attempt_validation(step_name, rules)
+            with btn_col2:
+                if st.button("Continue Anyway", type="secondary", use_container_width=True):
+                    proceed_to_next()
+                    st.rerun()
+        else:
+            if st.button("Next Step", type="primary", use_container_width=True):
+                if python_validation:
+                    err = python_validation()
+                    if err:
+                        st.session_state.current_warning = err
+                        st.rerun()
+                        return
+                attempt_validation(step_name, rules)
 
 st.progress(st.session_state.step / TOTAL_STEPS)
 
@@ -238,10 +286,8 @@ if st.session_state.step == 1:
     When writing your medical history, it is crucial to establish a timeline. 
     Be sure to mention:
     * **When** your symptoms first began (approximate year or deployment).
-    * **Where** you were or what you were exposed to (e.g., burn pits, specific base).
-    * **How** the condition has progressed since your service.
-    
-    A strong, detailed narrative here forms the foundation of your claim.
+    * **How** the condition started and progressed.
+    * **Link to service:** Where you were or what you were exposed to (e.g., burn pits, specific base).
     """)
     
     claim_selection = st.selectbox(
@@ -259,13 +305,20 @@ if st.session_state.step == 1:
             height=200
         )
 
-    st.divider()
-    if st.button("Next Step", type="primary"):
-        rules = """
-        1. The user must select either "Initial Claim" or "Re-evaluation".
-        2. The 'Brief history of sinus condition' must contain a coherent narrative detailing the origin or progression of the condition. It cannot be just 1-2 words.
-        """
-        handle_next_step("History", rules)
+    rules = """
+    1. The user MUST select either "Initial Claim" or "Re-evaluation for Existing". If not selected, FAIL.
+    2. If "Initial Claim" is selected, the 'Brief history' text MUST explicitly contain ALL THREE of these elements:
+       - HOW the symptoms began (origin/progression).
+       - WHEN the symptoms began (a date, year, or deployment period).
+       - The LINK to military service (e.g., burn pits, a specific base, active duty).
+    3. If "Re-evaluation for Existing" is selected, the 'Brief history' text MUST explicitly contain ALL TWO of these elements:
+       - HOW the symptoms began.
+       - WHEN the symptoms began.
+    If ANY of the required elements based on their claim type are missing, FAIL and list exactly which elements are missing.
+    """
+    
+    if claim_selection != "--select an item--":
+        render_navigation("History", rules)
 
 # ==========================================
 # STEP 2: MEDICATIONS
@@ -308,70 +361,32 @@ elif st.session_state.step == 2:
             if num_meds == "More than 3":
                 st.text_area("List additional medications (include Name, Dosage, and Frequency):", key="Sinusitis__c.Sinus_Q11b__c")
 
-    st.divider()
-    col1, col2 = st.columns([1, 4])
-    with col1: st.button("Back", on_click=prev_step)
-    with col2:
-        if st.button("Next Step", type="primary"):
-            save_step_data()
+    def py_validate_meds():
+        if st.session_state.get("Sinusitis__c.Sinus_Q11__c") == "Yes":
+            n_meds = st.session_state.get("Sinusitis__c.Sinus_Q11a__c")
+            if n_meds == "--select--":
+                return "Please select the number of medications."
             
-            # Hard Python Validation
-            validation_passed = True
-            error_msg = ""
+            count = 4 if n_meds == "More than 3" else int(n_meds)
+            check_limit = min(count, 3)
             
-            if st.session_state.get("Sinusitis__c.Sinus_Q11__c") == "Yes":
-                n_meds = st.session_state.get("Sinusitis__c.Sinus_Q11a__c")
-                if n_meds == "--select--":
-                    validation_passed = False
-                    error_msg = "Please select the number of medications."
-                else:
-                    count = 4 if n_meds == "More than 3" else int(n_meds)
-                    check_limit = min(count, 3)
-                    
-                    for i in range(check_limit):
-                        name_val = st.session_state.get(med_keys[i][0], "").strip()
-                        dose_val = st.session_state.get(med_keys[i][1], "").strip()
-                        freq_val = st.session_state.get(med_keys[i][2], "").strip()
-                        
-                        if not name_val:
-                            validation_passed = False
-                            error_msg = f"Medication #{i+1} Name is missing."
-                            break
-                        if not dose_val:
-                            validation_passed = False
-                            error_msg = f"Medication #{i+1} Dosage is missing. Please specify the amount."
-                            break
-                        if not freq_val:
-                            validation_passed = False
-                            error_msg = f"Medication #{i+1} Frequency is missing. Please specify how often it is taken."
-                            break
-                    
-                    if validation_passed and count == 4:
-                        if not st.session_state.get("Sinusitis__c.Sinus_Q11b__c", "").strip():
-                             validation_passed = False
-                             error_msg = "You selected 'More than 3' medications. Please list the additional ones in the text area."
+            for i in range(check_limit):
+                if not st.session_state.get(med_keys[i][0], "").strip(): return f"Medication #{i+1} Name is missing."
+                if not st.session_state.get(med_keys[i][1], "").strip(): return f"Medication #{i+1} Dosage is missing. Please specify the amount."
+                if not st.session_state.get(med_keys[i][2], "").strip(): return f"Medication #{i+1} Frequency is missing. Please specify how often it is taken."
+            
+            if count == 4 and not st.session_state.get("Sinusitis__c.Sinus_Q11b__c", "").strip():
+                 return "You selected 'More than 3' medications. Please list the additional ones in the text area."
+        return None
 
-            if not validation_passed:
-                st.error("Form Validation Error:")
-                st.info(error_msg)
-            else:
-                step_data = get_readable_step_data()
-                rules = """
-                Check if the provided medication names, dosages, and frequencies sound like valid medical treatments. 
-                If they wrote absolute gibberish (e.g., Name: 'asd', Dosage: 'xyz'), output an error hint.
-                Otherwise, PASS.
-                """
-                
-                with st.spinner("Assistant is reviewing your answers..."):
-                    ai_response = ai_auditor.validate_step("Medications", rules, step_data)
-                    
-                if ai_response == "PASS":
-                    st.session_state.step += 1
-                    st.rerun()
-                else:
-                    st.error("Assistant's Suggestion:")
-                    st.info(ai_response)
-                    
+    rules = """
+    Check if the provided medication names, dosages, and frequencies sound like valid medical treatments. 
+    If they wrote absolute gibberish (e.g., Name: 'asd', Dosage: 'xyz'), output an error hint.
+    Otherwise, PASS.
+    """
+    
+    render_navigation("Medications", rules, custom_validation=py_validate_meds)
+
 # ==========================================
 # STEP 3: SYMPTOMS & RATING SCHEDULE
 # ==========================================
@@ -403,16 +418,11 @@ elif st.session_state.step == 3:
         
         st.selectbox("Incapacitating episodes (last 12 months): *", ["0", "1", "2", "3 or more"], key="Sinusitis__c.Sinus_Q16__c")
 
-    st.divider()
-    col1, col2 = st.columns([1, 4])
-    with col1: st.button("Back", on_click=prev_step)
-    with col2:
-        if st.button("Next Step", type="primary"):
-            rules = """
-            1. Every symptom checked in the 'Symptoms checklist' MUST be explicitly mentioned or described in the 'Detailed symptom description' text area. If a checked symptom is missing from the description, ask them to add it.
-            2. Check for contradictions regarding incapacitating episodes. If the text description mentions "staying in bed", "bed rest", or "missing weeks of work", but 'Incapacitating episodes' is '0', warn them that their text implies incapacitation while their numerical selection is 0.
-            """
-            handle_next_step("Symptoms", rules)
+    rules = """
+    1. Every symptom checked in the 'Symptoms checklist' MUST be explicitly mentioned or described in the 'Detailed symptom description' text area. If a checked symptom is missing from the description, FAIL and ask them to add it.
+    2. Check for contradictions regarding incapacitating episodes. If the text description mentions "staying in bed", "bed rest", or "missing weeks of work", but 'Incapacitating episodes' is '0', warn them that their text implies incapacitation while their numerical selection is 0.
+    """
+    render_navigation("Symptoms", rules)
 
 # ==========================================
 # STEP 4: SURGERIES
@@ -441,13 +451,8 @@ elif st.session_state.step == 4:
             label_visibility="collapsed"
         )
 
-    st.divider()
-    col1, col2 = st.columns([1, 4])
-    with col1: st.button("Back", on_click=prev_step)
-    with col2:
-        if st.button("Next Step", type="primary"):
-            rules = "If the Veteran selected 'Yes' for surgery, they MUST provide the surgery Date, Type, and write a coherent description in 'Findings'. If 'Findings' is empty or too short, ask them to describe the outcome of the surgery."
-            handle_next_step("Surgeries", rules)
+    rules = "If the Veteran selected 'Yes' for surgery, they MUST provide the surgery Date, Type, and write a coherent description in 'Findings'. If 'Findings' is empty or too short, FAIL and ask them to describe the outcome of the surgery."
+    render_navigation("Surgeries", rules)
 
 # ==========================================
 # STEP 5: FINAL DETAILS & SUBMIT
@@ -465,12 +470,7 @@ elif st.session_state.step == 5:
     """)
     
     st.markdown("**Regardless of your current employment status, how does your sinus condition affect your ability to work? ***")
-    st.text_area(
-        "Occupational Impact Area", 
-        key="Sinusitis__c.Sinus_Q21__c", 
-        label_visibility="collapsed",
-        height=150
-    )
+    st.text_area("Occupational Impact Area", key="Sinusitis__c.Sinus_Q21__c", label_visibility="collapsed", height=150)
     st.text_input("Veteran Name: *", key="Sinusitis__c.DBQ__c.Veteran_Name_Text__c")
     st.text_input("Date Submitted (MM/DD/YYYY): *", key="Sinusitis__c.Date_Submitted__c")
     
@@ -485,41 +485,65 @@ elif st.session_state.step == 5:
             output["DPA"][core_key] = {"Question": QUESTION_MAP.get(core_key, core_key), "Answer": value}
         return json.dumps(output, indent=4)
 
+    def trigger_aws_upload():
+        save_step_data()
+        json_string = generate_tailored_json()
+        with st.status("Uploading to AWS...", expanded=True) as status:
+            filename = f"DBQ_Sinus_{json.loads(json_string)['caseID']}.json"
+            success = upload_to_source(json_string, filename)
+            
+            if success:
+                status.write("Upload complete. Triggering AWS job...")
+                result_data = poll_output_bucket(filename)
+                
+                if result_data:
+                    status.update(label="Processing Complete!", state="complete", expanded=False)
+                    st.divider()
+                    st.subheader("AWS Processing Result")
+                    st.json(result_data)
+                else:
+                    status.update(label="Processing Failed or Timed Out", state="error")
+            else:
+                status.update(label="Upload Failed", state="error")
+
     col1, col2 = st.columns([1, 4])
     with col1: 
-        st.button("Back", on_click=prev_step)
-    
-    if st.session_state.get("Sinusitis__c.Sinus_Q21__c") and st.session_state.get("Sinusitis__c.DBQ__c.Veteran_Name_Text__c"):
-        json_string = generate_tailored_json()
-        
-        if st.button("Validate and Submit to AWS", type="primary"):
-            with st.status("Final Validation and Upload...", expanded=True) as status:
-                rules = "The Occupational Impact must explain how the condition affects work. The Veteran Name and Date must be filled."
-                ai_response = ai_auditor.validate_step("Final Details", rules, get_readable_step_data())
+        if st.button("Back", use_container_width=True):
+            prev_step()
+            st.rerun()
+            
+    with col2:
+        if st.session_state.current_warning:
+            st.warning(f"**Global Consistency Check Warning:**\n\n{st.session_state.current_warning}")
+            st.info("You can go back to fix the errors, or submit the form anyway.")
+            
+            btn_col1, btn_col2 = st.columns(2)
+            with btn_col1:
+                if st.button("Re-evaluate Full Form", type="primary", use_container_width=True):
+                    st.session_state.current_warning = None
+                    st.rerun()
+            with btn_col2:
+                if st.button("Submit to AWS Anyway", type="secondary", use_container_width=True):
+                    trigger_aws_upload()
+        else:
+            if st.button("Run Final Audit and Submit", type="primary", use_container_width=True):
+                save_step_data()
+                
+                # GLOBAL VALIDATION
+                global_rules = """
+                Review the ENTIRE form data for global consistency.
+                1. Ensure the 'Brief history' narrative does not contradict the listed 'Symptoms checklist' or 'Surgeries'.
+                2. Check if the 'Occupational Impact' makes sense given the reported severity (e.g., if they claim 0 incapacitating episodes, their occupational impact shouldn't say they are bedridden for weeks).
+                3. The Veteran Name and Date Submitted must not be empty.
+                If there are ANY logical contradictions across sections, FAIL and explain the specific contradiction. Otherwise PASS.
+                """
+                
+                with st.spinner("AI is performing a final global consistency check..."):
+                    full_form_data = get_readable_step_data(global_fetch=True)
+                    ai_response = ai_auditor.validate_step("Global Full Form Audit", global_rules, full_form_data)
                 
                 if ai_response == "PASS":
-                    status.write("AI Validation Passed.")
-                    status.write("Uploading to S3...")
-                    
-                    filename = f"DBQ_Sinus_{json.loads(json_string)['caseID']}.json"
-                    success = upload_to_source(json_string, filename)
-                    
-                    if success:
-                        status.write("Upload complete. Triggering AWS job...")
-                        status.write(f"Polling output bucket for '{filename}'...")
-                        
-                        result_data = poll_output_bucket(filename)
-                        
-                        if result_data:
-                            status.update(label="Processing Complete!", state="complete", expanded=False)
-                            st.divider()
-                            st.subheader("AWS Processing Result")
-                            st.json(result_data)
-                        else:
-                            status.update(label="Processing Failed or Timed Out", state="error")
-                    else:
-                        status.update(label="Upload Failed", state="error")
+                    trigger_aws_upload()
                 else:
-                    status.update(label="Validation Error", state="error")
-                    st.error("Assistant's Suggestion:")
-                    st.info(ai_response)
+                    st.session_state.current_warning = ai_response
+                    st.rerun()
