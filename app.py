@@ -180,11 +180,16 @@ st.set_page_config(page_title="Sinusitis DBQ Validation", layout="centered")
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
 ai_auditor = GroqMedicalScribe(api_key=GROQ_API_KEY)
 
-# State Management
+# --- STATE MANAGEMENT ---
 if 'step' not in st.session_state:
     st.session_state.step = 1
 if 'form_data' not in st.session_state:
     st.session_state.form_data = {k: None for k in ALL_KEYS_ORDERED}
+
+# 💡 ZMIANA: Pętla przywracająca stan formularza przy przechodzeniu "Wstecz"
+for key, value in st.session_state.form_data.items():
+    if value is not None and key not in st.session_state:
+        st.session_state[key] = value
 
 TOTAL_STEPS = 5
 
