@@ -5,206 +5,70 @@ import random
 import string
 import boto3
 import time
-from botocore.exceptions import NoCredentialsError, ClientError
+from botocore.exceptions import ClientError
 
-# --- 1. MASTER FIELD LIST (Defines Order & Completeness) ---
-ALL_KEYS_ORDERED = [
-    "Sinusitis__c.Sinusitis_1a__c",
-    "Sinusitis__c.Sinus_Q10c__c",
-    "Sinusitis__c.Sinus_Q11__c",
-    "Sinusitis__c.Sinus_Q11a__c",
-    "Sinusitis__c.Sinus_Q11aaa__c", "Sinusitis__c.Sinus_Q11aab__c", "Sinusitis__c.Sinus_Q11aac__c",
-    "Sinusitis__c.Sinus_Q11aba__c", "Sinusitis__c.Sinus_Q11abb__c", "Sinusitis__c.Sinus_Q11abc__c",
-    "Sinusitis__c.Sinus_Q11aca__c", "Sinusitis__c.Sinus_Q11acb__c", "Sinusitis__c.Sinus_Q11acc__c",
-    "Sinusitis__c.Sinus_Q11b__c",
-    "Sinusitis__c.Sinus_Q48__c",
-    "Sinusitis__c.Sinus_Q34__c",
-    "Sinusitis__c.Sinus_Q12__c",
-    "Sinusitis__c.Sinus_Q13__c",
-    "Sinusitis__c.Sinus_Q14__c",
-    "Sinusitis__c.Sinus_Q15__c",
-    "Sinusitis__c.Sinus_Q16__c",
-    "Sinusitis__c.Sinus_Q17__c",
-    "Sinusitis__c.Sinus_Q17a__c",
-    "Sinusitis__c.Sinus_Q17aaa__c", "Sinusitis__c.Sinus_Q17aaa1__c", "Sinusitis__c.Sinus_Q17aab__c",
-    "Sinusitis__c.Sinus_Q17aba__c", "Sinusitis__c.Sinus_Q17aba1__c", "Sinusitis__c.Sinus_Q17abb__c",
-    "Sinusitis__c.Sinus_Q17abc__c", "Sinusitis__c.Sinus_Q17abc1__c", "Sinusitis__c.Sinus_Q17aca__c",
-    "Sinusitis__c.Sinus_Q17acb__c", "Sinusitis__c.Sinus_Q17acb1__c", "Sinusitis__c.Sinus_Q17acc__c",
-    "Sinusitis__c.Sinus_Q17b__c",
-    "Sinusitis__c.Sinus_Q17c__c",
-    "Sinusitis__c.Sinus_Q17d__c",
-    "Sinusitis__c.Sinus_Q20__c",
-    "Sinusitis__c.Sinus_Q20a__c",
-    "Sinusitis__c.Sinus_Q20b__c",
-    "Sinusitis__c.Sinus_Q20c__c",
-    "Sinusitis__c.Sinus_Q20d__c",
-    "Sinusitis__c.Sinus_Q35__c",
-    "Sinusitis__c.Sinus_Q35a__c", "Sinusitis__c.Sinus_Q35b__c", "Sinusitis__c.Sinus_Q35c__c",
-    "Sinusitis__c.Sinus_Q36__c",
-    "Sinusitis__c.Sinus_Q36a__c", "Sinusitis__c.Sinus_Q36b__c",
-    "Sinusitis__c.Sinus_Q36c__c",
-    "Sinusitis__c.Sinus_Q36d__c",
-    "Sinusitis__c.Sinus_Q36e__c", "Sinusitis__c.Sinus_Q36f__c",
-    "Sinusitis__c.Sinus_Q36g__c",
-    "Sinusitis__c.Sinus_Q36h__c", "Sinusitis__c.Sinus_Q37__c", "Sinusitis__c.Sinus_Q37a__c",
-    "Sinusitis__c.Sinus_Q38__c", "Sinusitis__c.Sinus_Q38a__c",
-    "Sinusitis__c.Sinus_Q39__c",
-    "Sinusitis__c.Sinus_Q39a__c", "Sinusitis__c.Sinus_Q39b__c", "Sinusitis__c.Sinus_Q39c__c", "Sinusitis__c.Sinus_Q39d__c",
-    "Sinusitis__c.Sinus_Q30__c",
-    "Sinusitis__c.Sinus_Q31__c",
-    "Sinusitis__c.Sinus_Q40__c",
-    "Sinusitis__c.Sinus_Q41__c",
-    "Sinusitis__c.Sinus_Q32__c",
-    "Sinusitis__c.Sinus_Q43__c",
-    "Sinusitis__c.Sinus_Q42__c",
-    "Sinusitis__c.Sinus_Q49__c",
-    "Sinusitis__c.Sinus_Q50__c",
-    "Sinusitis__c.Sinus_Q51__c",
-    "Sinusitis__c.Sinus_Q52__c",
-    "Sinusitis__c.Sinus_Q44__c",
-    "Sinusitis__c.Sinus_Q53__c", "Sinusitis__c.Sinus_Q54__c",
-    "Sinusitis__c.Sinus_Q55__c", "Sinusitis__c.Sinus_Q56__c",
-    "Sinusitis__c.Sinus_Q45__c",
-    "Sinusitis__c.Sinus_Q46__c", "Sinusitis__c.Sinus_Q47__c",
-    "Sinusitis__c.Sinus_Q42e__c",
-    "Sinusitis__c.Sinus_Q21__c",
-    "Sinusitis__c.DBQ__c.Veteran_Name_Text__c",
-    "Sinusitis__c.Date_Submitted__c"
-]
-
-# --- 2. QUESTION TEXT MAPPING ---
-QUESTION_MAP = {
-    "Sinusitis_1a__c": "Are you applying for an initial claim or a re-evaluation?",
-    "Sinus_Q10c__c": "Brief history of sinus condition",
-    "Sinus_Q11__c": "Do you currently take any medication?",
-    "Sinus_Q11a__c": "How many medications do you take?",
-    "Sinus_Q11aaa__c": "Medication #1 Name", "Sinus_Q11aab__c": "Medication #1 Dosage", "Sinus_Q11aac__c": "Medication #1 Frequency",
-    "Sinus_Q11aba__c": "Medication #2 Name", "Sinus_Q11abb__c": "Medication #2 Dosage", "Sinus_Q11abc__c": "Medication #2 Frequency",
-    "Sinus_Q11aca__c": "Medication #3 Name", "Sinus_Q11acb__c": "Medication #3 Dosage", "Sinus_Q11acc__c": "Medication #3 Frequency",
-    "Sinus_Q11b__c": "Additional medications list",
-    "Sinus_Q48__c": "Seeking service connection?",
-    "Sinus_Q34__c": "Sinuses currently affected",
-    "Sinus_Q12__c": "Symptoms checklist",
-    "Sinus_Q13__c": "Frequency of Near Constant Sinusitis",
-    "Sinus_Q14__c": "Detailed symptom description",
-    "Sinus_Q15__c": "Non-incapacitating episodes (12mo)",
-    "Sinus_Q16__c": "Incapacitating episodes (12mo)",
-    "Sinus_Q17__c": "Have you had sinus surgery?",
-    "Sinus_Q17a__c": "Number of sinus surgeries",
-    "Sinus_Q17aaa__c": "Surgery #1 Date", "Sinus_Q17aaa1__c": "Surgery #1 Type", "Sinus_Q17aab__c": "Surgery #1 Findings",
-    "Sinus_Q17aba__c": "Surgery #2 Date", "Sinus_Q17aba1__c": "Surgery #2 Type", "Sinus_Q17abb__c": "Surgery #2 Findings",
-    "Sinus_Q17abc__c": "Surgery #3 Date", "Sinus_Q17abc1__c": "Surgery #3 Type", "Sinus_Q17aca__c": "Surgery #3 Findings",
-    "Sinus_Q17acb__c": "Surgery #4 Date", "Sinus_Q17acb1__c": "Surgery #4 Type", "Sinus_Q17acc__c": "Surgery #4 Findings",
-    "Sinus_Q17b__c": "Additional surgery details",
-    "Sinus_Q17c__c": "Sinuses operated on",
-    "Sinus_Q17d__c": "Side operated on",
-    "Sinus_Q20__c": "Seeking connection for Rhinitis?",
-    "Sinus_Q20a__c": "Blockage >50% both passages",
-    "Sinus_Q20b__c": "Complete blockage side",
-    "Sinus_Q20c__c": "Permanent hypertrophy of turbinates",
-    "Sinus_Q20d__c": "Nasal polyps",
-    "Sinus_Q35__c": "Chronic laryngitis?",
-    "Sinus_Q35a__c": "Laryngitis symptoms",
-    "Sinus_Q35b__c": "Hoarseness frequency",
-    "Sinus_Q35c__c": "Other laryngitis symptoms",
-    "Sinus_Q36__c": "Laryngectomy?",
-    "Sinus_Q36a__c": "Laryngectomy type",
-    "Sinus_Q36b__c": "Laryngectomy residuals",
-    "Sinus_Q36c__c": "Laryngeal stenosis/trauma",
-    "Sinus_Q36d__c": "Complete Aphonia?",
-    "Sinus_Q36e__c": "Aphonia symptoms",
-    "Sinus_Q36f__c": "Other aphonia residuals",
-    "Sinus_Q36g__c": "Incomplete Aphonia?",
-    "Sinus_Q36h__c": "Incomplete Aphonia symptoms",
-    "Sinus_Q37__c": "Incomplete Aphonia frequency",
-    "Sinus_Q37a__c": "Other incomplete aphonia residuals",
-    "Sinus_Q38__c": "Permanent tracheostomy?",
-    "Sinus_Q38a__c": "Tracheostomy reason",
-    "Sinus_Q39__c": "Injury to pharynx?",
-    "Sinus_Q39a__c": "Pharynx symptoms",
-    "Sinus_Q39b__c": "Other pharynx residuals",
-    "Sinus_Q39c__c": "Vocal cord paralysis?",
-    "Sinus_Q39d__c": "Vocal cord details",
-    "Sinus_Q30__c": "Deviated Septum?",
-    "Sinus_Q31__c": "Traumatic septum?",
-    "Sinus_Q40__c": "Obstruction Left",
-    "Sinus_Q41__c": "Obstruction Right",
-    "Sinus_Q32__c": ">50% Obstruction Both",
-    "Sinus_Q43__c": "Tumors/Neoplasms?",
-    "Sinus_Q42__c": "Neoplasm State",
-    "Sinus_Q49__c": "Malignant Status",
-    "Sinus_Q50__c": "Neoplasm Type",
-    "Sinus_Q51__c": "Primary Site",
-    "Sinus_Q52__c": "Treatment Status",
-    "Sinus_Q44__c": "Treatment Types",
-    "Sinus_Q53__c": "Recent radiation date",
-    "Sinus_Q54__c": "Radiation completion date",
-    "Sinus_Q55__c": "Recent chemo date",
-    "Sinus_Q56__c": "Chemo completion date",
-    "Sinus_Q45__c": "Other treatment details",
-    "Sinus_Q46__c": "Surgery on neoplasm?",
-    "Sinus_Q47__c": "Neoplasm surgery description",
-    "Sinus_Q42e__c": "Tumor residuals",
-    "Sinus_Q21__c": "Occupational Impact",
-    "DBQ__c.Veteran_Name_Text__c": "Veteran Name",
-    "Date_Submitted__c": "Date Submitted"
-}
-
-# --- GROQ AI AUDITOR ---
-class GroqMedicalAuditor:
-    def __init__(self, api_key, model="llama-3.3-70b-versatile"):
+# --- GROQ AI VALIDATOR ---
+class GroqMedicalScribe:
+    def __init__(self, api_key, model="llama-3.3-70b-versatile"): 
         self.url = "https://api.groq.com/openai/v1/chat/completions"
         self.api_key = api_key
         self.model = model
 
-    def cross_check_logic(self, data):
+    def validate_step(self, step_name, rules, step_data):
         if not self.api_key:
-            return "❌ Groq API Key missing in Secrets."
-
-        # Filter: Only show active fields to AI to keep prompt clean
-        readable_data = {}
-        for k, v in data.items():
-            if v is not None:
-                core_key = k.replace("Sinusitis__c.", "")
-                label = QUESTION_MAP.get(core_key, core_key)
-                readable_data[label] = v
-
+            return "Groq API Key missing in Secrets."
+            
         prompt = f"""
-        [SYSTEM: VA CLAIMS AUDITOR. USE HUMAN LABELS. FIND CONTRADICTIONS.]
-        INPUT DATA:
-        {json.dumps(readable_data, indent=2)}
-
-        MANDATORY AUDIT PROTOCOL:
-        1. MEDICATION COUNT: If 'Brief history' or 'Number of Medications' says "2" but only 1 'Medication Name' is listed, FLAG IT.
-        2. SYMPTOM MATCH: If 'Symptoms checklist' has checked items not described in 'Detailed symptom description', FLAG IT.
-        3. RATING TRAP: If 'Incapacitating episodes' is 0 but text describes bed rest/missing work, FLAG IT.
-
-        OUTPUT FORMAT:
-        ### 🚩 LOGICAL CONFLICTS
-        - [Conflict]
-        ### 💡 MISSING DETAILS
-        - [Gap]
-        ### 🩺 CLINICAL REFINEMENT
-        - [Suggestion]
+        You are a strict medical data validation AI. Review the VETERAN'S INPUT against the VALIDATION RULES.
+        
+        SECTION: {step_name}
+        VETERAN'S INPUT: {json.dumps(step_data)}
+        RULES: {rules}
+        
+        You must output ONLY a valid JSON object.
+        Format exactly like this:
+        {{
+          "status": "PASS" or "FAIL",
+          "hint": "If FAIL, write your 1-2 sentence hint here explaining what needs correction. If PASS, leave empty."
+        }}
         """
         
-        headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        
         payload = {
             "model": self.model,
-            "messages": [{"role": "system", "content": "You are a literal data validator."},
-                         {"role": "user", "content": prompt}],
+            "messages": [
+                {"role": "system", "content": "You are a literal data validator returning only JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            "response_format": {"type": "json_object"}, # Forces Groq to output clean JSON
             "temperature": 0.0
         }
+        
         try:
             res = requests.post(self.url, json=payload, headers=headers, timeout=25)
-            return res.json()['choices'][0]['message']['content']
+            if res.status_code != 200:
+                return f"API Error: {res.text}"
+                
+            response_text = res.json()['choices'][0]['message']['content'].strip()
+            
+            try:
+                parsed_json = json.loads(response_text)
+                if parsed_json.get("status") == "PASS":
+                    return "PASS"
+                else:
+                    return parsed_json.get("hint", "Missing information. Please check your inputs.")
+            except json.JSONDecodeError:
+                return f"Model error. Raw output: {response_text}"
+                
         except Exception as e:
-            return f"❌ Groq Error: {str(e)}"
+            return f"Cannot connect to Groq server. Error: {str(e)}"
 
 # --- AWS S3 FUNCTIONS ---
-
 def get_s3_client():
-    """Helper to get S3 client from secrets."""
     return boto3.client(
         's3',
         aws_access_key_id=st.secrets["aws"]["ACCESS_KEY"],
@@ -212,10 +76,9 @@ def get_s3_client():
     )
 
 def upload_to_source(json_data, filename):
-    """Uploads to ree-dbq-gen-source-test/source_files/"""
     try:
         s3 = get_s3_client()
-        bucket_name = st.secrets["aws"]["BUCKET_NAME"] # Input Bucket
+        bucket_name = st.secrets["aws"]["BUCKET_NAME"]
         s3_key = f"source_files/{filename}"
         
         s3.put_object(
@@ -230,35 +93,23 @@ def upload_to_source(json_data, filename):
         return False
 
 def poll_output_bucket(filename, initial_wait=30, timeout=180):
-    """
-    Waits initial_wait seconds, then polls ree-dbq-gen-output-test/ for the file.
-    timeout is the total time allowed AFTER the initial wait.
-    """
     s3 = get_s3_client()
-    # Ensure this secret key exists in your .streamlit/secrets.toml
     output_bucket = st.secrets["aws"]["OUTPUT_BUCKET_NAME"]
     
-    # 1. The Smart Wait
     placeholder = st.empty()
     for i in range(initial_wait, 0, -1):
-        placeholder.info(f"⏳ AWS is processing... polling will start in {i} seconds.")
+        placeholder.info(f"AWS is processing... polling will start in {i} seconds.")
         time.sleep(1)
     
-    # 2. The Active Poll
     start_time = time.time()
     while time.time() - start_time < timeout:
         try:
-            placeholder.info(f"🔄 Checking S3 for result... ({int(time.time() - start_time)}s elapsed)")
-            
-            # Check for file
+            placeholder.info(f"Checking S3 for result... ({int(time.time() - start_time)}s elapsed)")
             response = s3.get_object(Bucket=output_bucket, Key=filename)
             file_content = response['Body'].read().decode('utf-8')
-            
-            placeholder.success("✅ Processing Complete! Result received.")
+            placeholder.success("Processing Complete! Result received.")
             return json.loads(file_content)
-            
         except ClientError as e:
-            # If file not found, wait 5s and try again
             if e.response['Error']['Code'] == "NoSuchKey":
                 time.sleep(5) 
             else:
@@ -268,211 +119,402 @@ def poll_output_bucket(filename, initial_wait=30, timeout=180):
             placeholder.error(f"Error: {e}")
             return None
             
-    placeholder.error("❌ Timeout: AWS took too long to process the file.")
+    placeholder.error("Timeout: AWS took too long to process the file.")
     return None
 
-# --- APP START ---
-st.set_page_config(page_title="Complete Sinusitis DBQ", layout="wide")
+# --- KEY MAPPING ---
+ALL_KEYS_ORDERED = [
+    "Sinusitis__c.Sinusitis_1a__c", "Sinusitis__c.Sinus_Q10c__c", "Sinusitis__c.Sinus_Q11__c",
+    "Sinusitis__c.Sinus_Q11a__c", "Sinusitis__c.Sinus_Q11aaa__c", "Sinusitis__c.Sinus_Q11aab__c",
+    "Sinusitis__c.Sinus_Q11aac__c", "Sinusitis__c.Sinus_Q11aba__c", "Sinusitis__c.Sinus_Q11abb__c",
+    "Sinusitis__c.Sinus_Q11abc__c", "Sinusitis__c.Sinus_Q11aca__c", "Sinusitis__c.Sinus_Q11acb__c",
+    "Sinusitis__c.Sinus_Q11acc__c", "Sinusitis__c.Sinus_Q11b__c", "Sinusitis__c.Sinus_Q48__c",
+    "Sinusitis__c.Sinus_Q34__c", "Sinusitis__c.Sinus_Q12__c", "Sinusitis__c.Sinus_Q13__c",
+    "Sinusitis__c.Sinus_Q14__c", "Sinusitis__c.Sinus_Q15__c", "Sinusitis__c.Sinus_Q16__c",
+    "Sinusitis__c.Sinus_Q17__c", "Sinusitis__c.Sinus_Q17a__c", "Sinusitis__c.Sinus_Q17aaa__c",
+    "Sinusitis__c.Sinus_Q17aaa1__c", "Sinusitis__c.Sinus_Q17aab__c", "Sinusitis__c.Sinus_Q17aba__c",
+    "Sinusitis__c.Sinus_Q17aba1__c", "Sinusitis__c.Sinus_Q17abb__c", "Sinusitis__c.Sinus_Q17abc__c",
+    "Sinusitis__c.Sinus_Q17abc1__c", "Sinusitis__c.Sinus_Q17aca__c", "Sinusitis__c.Sinus_Q17acb__c",
+    "Sinusitis__c.Sinus_Q17acb1__c", "Sinusitis__c.Sinus_Q17acc__c", "Sinusitis__c.Sinus_Q17b__c",
+    "Sinusitis__c.Sinus_Q17c__c", "Sinusitis__c.Sinus_Q17d__c", "Sinusitis__c.Sinus_Q20__c",
+    "Sinusitis__c.Sinus_Q20a__c", "Sinusitis__c.Sinus_Q20b__c", "Sinusitis__c.Sinus_Q20c__c",
+    "Sinusitis__c.Sinus_Q20d__c", "Sinusitis__c.Sinus_Q35__c", "Sinusitis__c.Sinus_Q35a__c",
+    "Sinusitis__c.Sinus_Q35b__c", "Sinusitis__c.Sinus_Q35c__c", "Sinusitis__c.Sinus_Q36__c",
+    "Sinusitis__c.Sinus_Q36a__c", "Sinusitis__c.Sinus_Q36b__c", "Sinusitis__c.Sinus_Q36c__c",
+    "Sinusitis__c.Sinus_Q36d__c", "Sinusitis__c.Sinus_Q36e__c", "Sinusitis__c.Sinus_Q36f__c",
+    "Sinusitis__c.Sinus_Q36g__c", "Sinusitis__c.Sinus_Q36h__c", "Sinusitis__c.Sinus_Q37__c",
+    "Sinusitis__c.Sinus_Q37a__c", "Sinusitis__c.Sinus_Q38__c", "Sinusitis__c.Sinus_Q38a__c",
+    "Sinusitis__c.Sinus_Q39__c", "Sinusitis__c.Sinus_Q39a__c", "Sinusitis__c.Sinus_Q39b__c",
+    "Sinusitis__c.Sinus_Q39c__c", "Sinusitis__c.Sinus_Q39d__c", "Sinusitis__c.Sinus_Q30__c",
+    "Sinusitis__c.Sinus_Q31__c", "Sinusitis__c.Sinus_Q40__c", "Sinusitis__c.Sinus_Q41__c",
+    "Sinusitis__c.Sinus_Q32__c", "Sinusitis__c.Sinus_Q43__c", "Sinusitis__c.Sinus_Q42__c",
+    "Sinusitis__c.Sinus_Q49__c", "Sinusitis__c.Sinus_Q50__c", "Sinusitis__c.Sinus_Q51__c",
+    "Sinusitis__c.Sinus_Q52__c", "Sinusitis__c.Sinus_Q44__c", "Sinusitis__c.Sinus_Q53__c",
+    "Sinusitis__c.Sinus_Q54__c", "Sinusitis__c.Sinus_Q55__c", "Sinusitis__c.Sinus_Q56__c",
+    "Sinusitis__c.Sinus_Q45__c", "Sinusitis__c.Sinus_Q46__c", "Sinusitis__c.Sinus_Q47__c",
+    "Sinusitis__c.Sinus_Q42e__c", "Sinusitis__c.Sinus_Q21__c", "Sinusitis__c.DBQ__c.Veteran_Name_Text__c",
+    "Sinusitis__c.Date_Submitted__c"
+]
+
+QUESTION_MAP = {
+    "Sinusitis_1a__c": "Initial claim or re-evaluation?",
+    "Sinus_Q10c__c": "Brief history of sinus condition",
+    "Sinus_Q11__c": "Do you currently take any medication?",
+    "Sinus_Q11a__c": "How many medications?",
+    "Sinus_Q11aaa__c": "Medication #1 Name", "Sinus_Q11aba__c": "Medication #2 Name", "Sinus_Q11aca__c": "Medication #3 Name",
+    "Sinus_Q48__c": "Seeking service connection?",
+    "Sinus_Q34__c": "Sinuses affected",
+    "Sinus_Q12__c": "Symptoms checklist",
+    "Sinus_Q14__c": "Detailed symptom description",
+    "Sinus_Q15__c": "Non-incapacitating episodes (12mo)",
+    "Sinus_Q16__c": "Incapacitating episodes (12mo)",
+    "Sinus_Q17__c": "Ever had sinus surgery?",
+    "Sinus_Q17a__c": "How many sinus surgeries?",
+    "Sinus_Q21__c": "Occupational Impact"
+}
+
+# --- APP CONFIG ---
+st.set_page_config(page_title="Sinusitis DBQ Validation", layout="centered")
+
+# Initialize LLM with Groq Secrets
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
-auditor = GroqMedicalAuditor(GROQ_API_KEY)
+ai_auditor = GroqMedicalScribe(api_key=GROQ_API_KEY)
 
-st.title("Chronic Sinusitis Questionnaire")
+# State Management
+if 'step' not in st.session_state:
+    st.session_state.step = 1
+if 'form_data' not in st.session_state:
+    st.session_state.form_data = {k: None for k in ALL_KEYS_ORDERED}
 
-# --- SECTION 1: Sinusitis Questionnaire (ffSection0) ---
-claim_selection = st.selectbox(
-    "Are you applying for an initial claim or a re-evaluation for an existing service-connected disability? *",
-    ["--select an item--", "Initial Claim", "Re-evaluation for Existing"],
-    key="Sinusitis__c.Sinusitis_1a__c"
-)
+TOTAL_STEPS = 5
 
-if claim_selection != "--select an item--":
-    h_label = "Briefly describe the history..." if claim_selection == "Initial Claim" else "Briefly describe the history..."
-    st.markdown(f"**{h_label}**")
-    st.text_area("History Area", key="Sinusitis__c.Sinus_Q10c__c", label_visibility="collapsed")
+def save_step_data():
+    for key in ALL_KEYS_ORDERED:
+        if key in st.session_state:
+            st.session_state.form_data[key] = st.session_state[key]
 
-    # Medication Tree
-    st.markdown("---")
-    med_trigger = st.radio("Do you currently take any medication(s)? *", ["Yes", "No"], index=1, horizontal=True, key="Sinusitis__c.Sinus_Q11__c")
+def get_readable_step_data():
+    readable_data = {}
+    for key in ALL_KEYS_ORDERED:
+        if key in st.session_state and st.session_state[key] not in [None, "", "--select--", "--select an item--"]:
+            core_key = key.replace("Sinusitis__c.", "")
+            label = QUESTION_MAP.get(core_key, core_key)
+            readable_data[label] = st.session_state[key]
+    return readable_data
+
+def handle_next_step(step_name, rules):
+    save_step_data()
+    step_data = get_readable_step_data()
+    
+    with st.spinner("Assistant is reviewing your answers..."):
+        ai_response = ai_auditor.validate_step(step_name, rules, step_data)
+        
+    if ai_response == "PASS":
+        st.session_state.step += 1
+        st.rerun()
+    else:
+        st.error("Assistant's Suggestion:")
+        st.info(ai_response)
+
+def prev_step():
+    save_step_data()
+    st.session_state.step -= 1
+
+st.progress(st.session_state.step / TOTAL_STEPS)
+
+# ==========================================
+# STEP 1: INTRODUCTION & HISTORY
+# ==========================================
+if st.session_state.step == 1:
+    st.title("Sinusitis DBQ: Introduction and History")
+    
+    st.info("""
+    **Guidance for this section:**
+    When writing your medical history, it is crucial to establish a timeline. 
+    Be sure to mention:
+    * **When** your symptoms first began (approximate year or deployment).
+    * **Where** you were or what you were exposed to (e.g., burn pits, specific base).
+    * **How** the condition has progressed since your service.
+    
+    A strong, detailed narrative here forms the foundation of your claim.
+    """)
+    
+    claim_selection = st.selectbox(
+        "Are you applying for an initial claim or a re-evaluation? *",
+        ["--select an item--", "Initial Claim", "Re-evaluation for Existing"],
+        key="Sinusitis__c.Sinusitis_1a__c"
+    )
+
+    if claim_selection != "--select an item--":
+        st.markdown("**Briefly describe the history of your sinus condition:**")
+        st.text_area(
+            "History Area", 
+            key="Sinusitis__c.Sinus_Q10c__c", 
+            label_visibility="collapsed", 
+            height=200
+        )
+
+    st.divider()
+    if st.button("Next Step", type="primary"):
+        rules = """
+        1. The user must select either "Initial Claim" or "Re-evaluation".
+        2. The 'Brief history of sinus condition' must contain a coherent narrative detailing the origin or progression of the condition. It cannot be just 1-2 words.
+        """
+        handle_next_step("History", rules)
+
+# ==========================================
+# STEP 2: MEDICATIONS
+# ==========================================
+elif st.session_state.step == 2:
+    st.title("Medications")
+    
+    st.info("""
+    **Guidance for this section:**
+    List all medications you currently take for your sinus condition. This includes:
+    * Prescription medications (e.g., antibiotics, strong steroids).
+    * Over-the-counter (OTC) drugs (e.g., Flonase, Zyrtec, Claritin).
+    
+    Make sure to provide the exact Name, the Dosage (e.g., 50mcg, 10mg), and the Frequency (e.g., twice a day, as needed). Accuracy here demonstrates the severity of your ongoing treatment.
+    """)
+    
+    med_trigger = st.radio("Do you currently take any medication(s)? *", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q11__c")
+    
+    med_keys = [
+        ("Sinusitis__c.Sinus_Q11aaa__c", "Sinusitis__c.Sinus_Q11aab__c", "Sinusitis__c.Sinus_Q11aac__c"),
+        ("Sinusitis__c.Sinus_Q11aba__c", "Sinusitis__c.Sinus_Q11abb__c", "Sinusitis__c.Sinus_Q11abc__c"),
+        ("Sinusitis__c.Sinus_Q11aca__c", "Sinusitis__c.Sinus_Q11acb__c", "Sinusitis__c.Sinus_Q11acc__c")
+    ]
+    
     if med_trigger == "Yes":
-        num_meds = st.selectbox("How many medications? *", ["--select--", "1", "2", "3", "More than 3"], key="Sinusitis__c.Sinus_Q11a__c")
+        num_meds = st.selectbox(
+            "How many medications? *", 
+            ["--select--", "1", "2", "3", "More than 3"], 
+            key="Sinusitis__c.Sinus_Q11a__c"
+        )
         if num_meds != "--select--":
-            for i, (name_key, dose_key, freq_key) in enumerate([
-                ("Sinusitis__c.Sinus_Q11aaa__c", "Sinusitis__c.Sinus_Q11aab__c", "Sinusitis__c.Sinus_Q11aac__c"),
-                ("Sinusitis__c.Sinus_Q11aba__c", "Sinusitis__c.Sinus_Q11abb__c", "Sinusitis__c.Sinus_Q11abc__c"),
-                ("Sinusitis__c.Sinus_Q11aca__c", "Sinusitis__c.Sinus_Q11acb__c", "Sinusitis__c.Sinus_Q11acc__c")
-            ], 1):
+            for i, (name_key, dose_key, freq_key) in enumerate(med_keys, 1):
                 if num_meds in [str(x) for x in range(i, 4)] or num_meds == "More than 3":
                     st.write(f"**Medication #{i}**")
                     c1, c2, c3 = st.columns(3)
                     with c1: st.text_input("Name", key=name_key)
                     with c2: st.text_input("Dosage", key=dose_key)
                     with c3: st.text_input("Frequency", key=freq_key)
+            
             if num_meds == "More than 3":
-                st.text_area("List additional medications:", key="Sinusitis__c.Sinus_Q11b__c")
+                st.text_area("List additional medications (include Name, Dosage, and Frequency):", key="Sinusitis__c.Sinus_Q11b__c")
 
-    # Service Connection Branch
-    st.markdown("---")
-    sc_trigger = st.radio("Are you service connected or seeking service connection for Sinusitis? *", ["Yes", "No"], index=1, horizontal=True, key="Sinusitis__c.Sinus_Q48__c")
+    st.divider()
+    col1, col2 = st.columns([1, 4])
+    with col1: st.button("Back", on_click=prev_step)
+    with col2:
+        if st.button("Next Step", type="primary"):
+            save_step_data()
+            
+            # Hard Python Validation
+            validation_passed = True
+            error_msg = ""
+            
+            if st.session_state.get("Sinusitis__c.Sinus_Q11__c") == "Yes":
+                n_meds = st.session_state.get("Sinusitis__c.Sinus_Q11a__c")
+                if n_meds == "--select--":
+                    validation_passed = False
+                    error_msg = "Please select the number of medications."
+                else:
+                    count = 4 if n_meds == "More than 3" else int(n_meds)
+                    check_limit = min(count, 3)
+                    
+                    for i in range(check_limit):
+                        name_val = st.session_state.get(med_keys[i][0], "").strip()
+                        dose_val = st.session_state.get(med_keys[i][1], "").strip()
+                        freq_val = st.session_state.get(med_keys[i][2], "").strip()
+                        
+                        if not name_val:
+                            validation_passed = False
+                            error_msg = f"Medication #{i+1} Name is missing."
+                            break
+                        if not dose_val:
+                            validation_passed = False
+                            error_msg = f"Medication #{i+1} Dosage is missing. Please specify the amount."
+                            break
+                        if not freq_val:
+                            validation_passed = False
+                            error_msg = f"Medication #{i+1} Frequency is missing. Please specify how often it is taken."
+                            break
+                    
+                    if validation_passed and count == 4:
+                        if not st.session_state.get("Sinusitis__c.Sinus_Q11b__c", "").strip():
+                             validation_passed = False
+                             error_msg = "You selected 'More than 3' medications. Please list the additional ones in the text area."
+
+            if not validation_passed:
+                st.error("Form Validation Error:")
+                st.info(error_msg)
+            else:
+                step_data = get_readable_step_data()
+                rules = """
+                Check if the provided medication names, dosages, and frequencies sound like valid medical treatments. 
+                If they wrote absolute gibberish (e.g., Name: 'asd', Dosage: 'xyz'), output an error hint.
+                Otherwise, PASS.
+                """
+                
+                with st.spinner("Assistant is reviewing your answers..."):
+                    ai_response = ai_auditor.validate_step("Medications", rules, step_data)
+                    
+                if ai_response == "PASS":
+                    st.session_state.step += 1
+                    st.rerun()
+                else:
+                    st.error("Assistant's Suggestion:")
+                    st.info(ai_response)
+                    
+# ==========================================
+# STEP 3: SYMPTOMS & RATING SCHEDULE
+# ==========================================
+elif st.session_state.step == 3:
+    st.title("Symptoms and Severity")
+    
+    st.info("""
+    **Guidance for this section:**
+    This section directly impacts your rating. 
+    * **Symptoms Checklist:** Only select symptoms you currently experience.
+    * **Detailed Description:** You must write a paragraph explaining *every single symptom* you checked above. Describe how the pain feels, how often the discharge occurs, etc.
+    * **Incapacitating Episodes:** The VA defines "incapacitating" very strictly. It means requiring **bed rest prescribed by a physician AND treatment with antibiotics for 4 to 6 weeks**. If you just stayed home from work but did not require prolonged antibiotics, do not overstate this count.
+    """)
+    
+    sc_trigger = st.radio("Are you seeking service connection for Sinusitis? *", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q48__c")
     if sc_trigger == "Yes":
-        st.multiselect("Indicate the sinus currently affected: *", ["Maxillary", "Frontal", "Ethmoid", "Sphenoid", "Pansinusitus", "Unknown"], key="Sinusitis__c.Sinus_Q34__c")
-        symp_list = st.multiselect("Select all sinus symptoms that apply: *", ["Near Constant Sinusitis", "Headaches caused by sinusitis", "Sinus pain", "Sinus tenderness", "Discharge containing pus", "Crusting"], key="Sinusitis__c.Sinus_Q12__c")
+        st.multiselect(
+            "Select all sinus symptoms that apply: *", 
+            ["Near Constant Sinusitis", "Headaches caused by sinusitis", "Sinus pain", "Discharge containing pus", "Crusting"], 
+            key="Sinusitis__c.Sinus_Q12__c"
+        )
+        st.markdown("**Please describe the symptoms you selected in detail: ***")
+        st.text_area(
+            "Detailed Description Area", 
+            key="Sinusitis__c.Sinus_Q14__c",
+            label_visibility="collapsed",
+            height=150
+        )
         
-        if "Near Constant Sinusitis" in symp_list:
-            st.selectbox("Near constant sinusitis frequency: *", ["Daily", "5-6 days per week", "3-4 days per week"], key="Sinusitis__c.Sinus_Q13__c")
-        st.text_area("Please describe the symptoms you selected in detail: *", key="Sinusitis__c.Sinus_Q14__c")
-        st.selectbox("Non-incapacitating episodes (last 12 months): *", ["1", "2", "3", "4", "5", "6", "7 or more"], key="Sinusitis__c.Sinus_Q15__c")
         st.selectbox("Incapacitating episodes (last 12 months): *", ["0", "1", "2", "3 or more"], key="Sinusitis__c.Sinus_Q16__c")
 
-        # Surgery Tree
-        surg_trigger = st.radio("Have you ever had sinus surgery? *", ["Yes", "No"], index=1, horizontal=True, key="Sinusitis__c.Sinus_Q17__c")
-        if surg_trigger == "Yes":
-            num_surg = st.selectbox("How many sinus surgeries have you had?", ["1", "2", "3", "4", "More than 4"], key="Sinusitis__c.Sinus_Q17a__c")
-            for i, (date_k, type_k, find_k) in enumerate([
-                ("Sinusitis__c.Sinus_Q17aaa__c", "Sinusitis__c.Sinus_Q17aaa1__c", "Sinusitis__c.Sinus_Q17aab__c"),
-                ("Sinusitis__c.Sinus_Q17aba__c", "Sinusitis__c.Sinus_Q17aba1__c", "Sinusitis__c.Sinus_Q17abb__c"),
-                ("Sinusitis__c.Sinus_Q17abc__c", "Sinusitis__c.Sinus_Q17abc1__c", "Sinusitis__c.Sinus_Q17aca__c"),
-                ("Sinusitis__c.Sinus_Q17acb__c", "Sinusitis__c.Sinus_Q17acb1__c", "Sinusitis__c.Sinus_Q17acc__c")
-            ], 1):
-                if num_surg in [str(x) for x in range(i, 5)] or num_surg == "More than 4":
-                    st.write(f"**Surgery #{i}**")
-                    c1, c2 = st.columns(2)
-                    with c1: st.text_input("Date (MM/YYYY)", key=date_k)
-                    with c2: st.selectbox("Type", ["Radical", "Endoscopic"], key=type_k)
-                    st.text_area("Findings", key=find_k)
-            if num_surg == "More than 4":
-                st.text_area("List additional surgery details:", key="Sinusitis__c.Sinus_Q17b__c")
-            st.multiselect("Sinus operated on:", ["Maxillary", "Frontal", "Ethmoid", "Sphenoid", "Pansinusitus", "Unknown"], key="Sinusitis__c.Sinus_Q17c__c")
-            st.selectbox("Side operated on:", ["Left", "Right", "Both"], key="Sinusitis__c.Sinus_Q17d__c")
+    st.divider()
+    col1, col2 = st.columns([1, 4])
+    with col1: st.button("Back", on_click=prev_step)
+    with col2:
+        if st.button("Next Step", type="primary"):
+            rules = """
+            1. Every symptom checked in the 'Symptoms checklist' MUST be explicitly mentioned or described in the 'Detailed symptom description' text area. If a checked symptom is missing from the description, ask them to add it.
+            2. Check for contradictions regarding incapacitating episodes. If the text description mentions "staying in bed", "bed rest", or "missing weeks of work", but 'Incapacitating episodes' is '0', warn them that their text implies incapacitation while their numerical selection is 0.
+            """
+            handle_next_step("Symptoms", rules)
 
-st.header("Rhinitis")
-if st.radio("Seeking connection for rhinitis? *", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q20__c") == "Yes":
-    st.radio("Blockage in >50% both nasal passages?", ["Yes", "No"], key="Sinusitis__c.Sinus_Q20a__c")
-    st.selectbox("Complete blockage side?", ["No", "Yes, Right side", "Yes, Left side", "Yes, both"], key="Sinusitis__c.Sinus_Q20b__c")
-    st.radio("Permanent enlargement of nasal turbinates?", ["Yes", "No"], key="Sinusitis__c.Sinus_Q20c__c")
-    st.radio("Diagnosed with nasal polyps?", ["Yes", "No"], key="Sinusitis__c.Sinus_Q20d__c")
+# ==========================================
+# STEP 4: SURGERIES
+# ==========================================
+elif st.session_state.step == 4:
+    st.title("Sinus Surgery")
+    
+    st.info("""
+    **Guidance for this section:**
+    If you have undergone any surgical procedures for your sinuses, document them here.
+    * **Date:** An approximate Month and Year is sufficient if you do not remember the exact day.
+    * **Findings:** Briefly explain what the surgeon did or discovered (e.g., "Removed nasal polyps and widened the sinus passages"). This shows the severity of the intervention required.
+    """)
+    
+    surg_trigger = st.radio("Have you ever had sinus surgery? *", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q17__c")
+    if surg_trigger == "Yes":
+        num_surg = st.selectbox("How many sinus surgeries?", ["1", "2", "3", "4", "More than 4"], key="Sinusitis__c.Sinus_Q17a__c")
+        c1, c2 = st.columns(2)
+        with c1: st.text_input("Date (MM/YYYY)", key="Sinusitis__c.Sinus_Q17aaa__c")
+        with c2: st.selectbox("Type", ["Radical", "Endoscopic"], key="Sinusitis__c.Sinus_Q17aaa1__c")
+        
+        st.markdown("**Findings:**")
+        st.text_area(
+            "Findings Area", 
+            key="Sinusitis__c.Sinus_Q17aab__c",
+            label_visibility="collapsed"
+        )
 
-st.header("Larynx and Pharynx Conditions")
-if st.radio("Do you have chronic laryngitis? *", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q35__c") == "Yes":
-    lar_s = st.multiselect("Symptoms:", ["Hoarseness", "Inflammation", "Polyps", "Other"], key="Sinusitis__c.Sinus_Q35a__c")
-    if "Hoarseness" in lar_s: st.text_area("Describe frequency:", key="Sinusitis__c.Sinus_Q35b__c")
-    if "Other" in lar_s: st.text_area("Describe other:", key="Sinusitis__c.Sinus_Q35c__c")
+    st.divider()
+    col1, col2 = st.columns([1, 4])
+    with col1: st.button("Back", on_click=prev_step)
+    with col2:
+        if st.button("Next Step", type="primary"):
+            rules = "If the Veteran selected 'Yes' for surgery, they MUST provide the surgery Date, Type, and write a coherent description in 'Findings'. If 'Findings' is empty or too short, ask them to describe the outcome of the surgery."
+            handle_next_step("Surgeries", rules)
 
-if st.radio("Ever had a laryngectomy? *", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q36__c") == "Yes":
-    ly_t = st.selectbox("Type:", ["Total", "Partial"], key="Sinusitis__c.Sinus_Q36a__c")
-    if ly_t == "Partial": st.text_area("Describe residuals:", key="Sinusitis__c.Sinus_Q36b__c")
-
-st.radio("Laryngeal stenosis or trauma residuals? *", ["Yes", "No"], key="Sinusitis__c.Sinus_Q36c__c")
-
-if st.radio("Complete organic aphonia? *", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q36d__c") == "Yes":
-    ap_s = st.multiselect("Symptoms:", ["Inability to whisper", "Inability to communicate", "Other"], key="Sinusitis__c.Sinus_Q36e__c")
-    if "Other" in ap_s: st.text_area("Describe other aphonia residuals:", key="Sinusitis__c.Sinus_Q36f__c")
-
-if st.radio("Incomplete organic aphonia? *", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q36g__c") == "Yes":
-    iap_s = st.multiselect("Symptoms checklist:", ["Hoarseness", "Inflammation", "Nodules", "Other"], key="Sinusitis__c.Sinus_Q36h__c")
-    if "Hoarseness" in iap_s: st.text_area("Describe frequency:", key="Sinusitis__c.Sinus_Q37__c")
-    if "Other" in iap_s: st.text_area("Describe other residuals:", key="Sinusitis__c.Sinus_Q37a__c")
-
-if st.radio("Permanent tracheostomy? *", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q38__c") == "Yes":
-    st.text_area("Describe reason/potential reversal:", key="Sinusitis__c.Sinus_Q38a__c")
-
-if st.radio("Injury to pharynx? *", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q39__c") == "Yes":
-    st.multiselect("Symptoms:", ["Obstruction", "Stricture", "Speech impairment", "Other"], key="Sinusitis__c.Sinus_Q39a__c")
-    st.radio("Vocal cord paralysis? *", ["Yes", "No"], key="Sinusitis__c.Sinus_Q39c__c")
-
-st.header("Deviated Septum")
-if st.radio("Seeking connection for deviated septum? *", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q30__c") == "Yes":
-    st.radio("Is it traumatic?", ["Yes", "No"], key="Sinusitis__c.Sinus_Q31__c")
-    st.radio("Complete obstruction Left side?", ["Yes", "No"], key="Sinusitis__c.Sinus_Q40__c")
-    st.radio("Complete obstruction Right side?", ["Yes", "No"], key="Sinusitis__c.Sinus_Q41__c")
-    st.radio(">50% obstruction both sides?", ["Yes", "No"], key="Sinusitis__c.Sinus_Q32__c")
-
-st.header("Tumors/Neoplasms")
-if st.radio("Tumors related to above conditions? *", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q43__c") == "Yes":
-    tum_state = st.selectbox("State:", ["Benign", "Malignant"], key="Sinusitis__c.Sinus_Q42__c")
-    if tum_state == "Malignant":
-        st.selectbox("Status:", ["Active", "Remission"], key="Sinusitis__c.Sinus_Q49__c")
-        if st.selectbox("Type:", ["Primary", "Secondary"], key="Sinusitis__c.Sinus_Q50__c") == "Secondary":
-            st.text_area("Primary site:", key="Sinusitis__c.Sinus_Q51__c")
-    tr_status = st.selectbox("Treatment status:", ["Yes - Current", "Yes - Completed", "No"], key="Sinusitis__c.Sinus_Q52__c")
-    if tr_status != "No":
-        t_t = st.multiselect("Treatments:", ["Radiation", "Chemotherapy", "X-ray", "Other"], key="Sinusitis__c.Sinus_Q44__c")
-        if "Radiation" in t_t: 
-            st.date_input("Recent radiation", key="Sinusitis__c.Sinus_Q53__c")
-            st.date_input("Radiation completion", key="Sinusitis__c.Sinus_Q54__c")
-        if "Antineoplastic chemotherapy" in t_t:
-            st.date_input("Recent chemo", key="Sinusitis__c.Sinus_Q55__c")
-            st.date_input("Chemo completion", key="Sinusitis__c.Sinus_Q56__c")
-        if "Other" in t_t: st.text_area("Describe other treatments:", key="Sinusitis__c.Sinus_Q45__c")
-    if st.radio("Had surgery on neoplasm?", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q46__c") == "Yes":
-        st.text_area("Neoplasm surgery description:", key="Sinusitis__c.Sinus_Q47__c")
-
-st.header("Final Details")
-st.text_area("List residuals/complications of tumors:", key="Sinusitis__c.Sinus_Q42e__c")
-st.text_area("Sinusitis impact on occupational tasks: *", key="Sinusitis__c.Sinus_Q21__c")
-st.text_input("Veteran Name: *", key="Sinusitis__c.DBQ__c.Veteran_Name_Text__c")
-st.text_input("Date Submitted (MM/DD/YYYY): *", key="Sinusitis__c.Date_Submitted__c")
-
-# --- AI AUDIT TRIGGER ---
-st.divider()
-if st.button("🔍 Run Logical Cross-Check (Groq AI)"):
-    all_form_data = {k: v for k, v in st.session_state.items() if "Sinusitis__c" in str(k)}
-    with st.spinner("Analyzing for contradictions..."):
-        audit_feedback = auditor.cross_check_logic(all_form_data)
-        st.sidebar.markdown("### 🩺 Auditor Results")
-        st.sidebar.markdown(audit_feedback)
-
-# --- TAILORED ORDERED DOWNLOAD LOGIC ---
-def generate_tailored_json():
-    case_id = ''.join(random.choices(string.digits, k=6))
-    output = {
-        "caseID": case_id,
-        "DBQType": "sinus",
-        "DPA": {}
-    }
-    for key in ALL_KEYS_ORDERED:
-        core_key = key.replace("Sinusitis__c.", "")
-        value = st.session_state.get(key, None)
-        if value and hasattr(value, 'isoformat'):
-            value = value.isoformat()
-        output["DPA"][core_key] = {
-            "Question": QUESTION_MAP.get(core_key, core_key),
-            "Answer": value
-        }
-    return json.dumps(output, indent=4)
-
-st.divider()
-col1, col2 = st.columns(2)
-
-json_string = generate_tailored_json()
-json_data = json.loads(json_string)
-filename = f"DBQ_Sinus_{json_data['caseID']}.json"
-
-with col1:
-    st.download_button(
-        label="📥 Download Tailored JSON",
-        data=json_string,
-        file_name=filename,
-        mime="application/json"
+# ==========================================
+# STEP 5: FINAL DETAILS & SUBMIT
+# ==========================================
+elif st.session_state.step == 5:
+    st.title("Final Details and Submission")
+    
+    st.info("""
+    **Guidance for this section:**
+    The Occupational Impact section is critical for establishing how your condition affects your daily life and livelihood. 
+    Do not just write "It hurts." Explain:
+    * If you have to take sick days.
+    * If headaches prevent you from looking at screens or focusing.
+    * If environmental factors at work (dust, AC, chemicals) exacerbate your symptoms.
+    """)
+    
+    st.markdown("**Regardless of your current employment status, how does your sinus condition affect your ability to work? ***")
+    st.text_area(
+        "Occupational Impact Area", 
+        key="Sinusitis__c.Sinus_Q21__c", 
+        label_visibility="collapsed",
+        height=150
     )
+    st.text_input("Veteran Name: *", key="Sinusitis__c.DBQ__c.Veteran_Name_Text__c")
+    st.text_input("Date Submitted (MM/DD/YYYY): *", key="Sinusitis__c.Date_Submitted__c")
+    
+    st.divider()
+    
+    def generate_tailored_json():
+        case_id = ''.join(random.choices(string.digits, k=6))
+        output = {"caseID": case_id, "DBQType": "sinus", "DPA": {}}
+        for key in ALL_KEYS_ORDERED:
+            core_key = key.replace("Sinusitis__c.", "")
+            value = st.session_state.form_data.get(key, None)
+            output["DPA"][core_key] = {"Question": QUESTION_MAP.get(core_key, core_key), "Answer": value}
+        return json.dumps(output, indent=4)
 
-with col2:
-    if st.button("☁️ Process on AWS Cloud"):
-        with st.status("Uploading to S3...", expanded=True) as status:
-            success = upload_to_source(json_string, filename)
-            
-            if success:
-                status.write("✅ Upload complete. Triggering AWS job...")
-                status.write(f"⏳ Polling output bucket for '{filename}'...")
+    col1, col2 = st.columns([1, 4])
+    with col1: 
+        st.button("Back", on_click=prev_step)
+    
+    if st.session_state.get("Sinusitis__c.Sinus_Q21__c") and st.session_state.get("Sinusitis__c.DBQ__c.Veteran_Name_Text__c"):
+        json_string = generate_tailored_json()
+        
+        if st.button("Validate and Submit to AWS", type="primary"):
+            with st.status("Final Validation and Upload...", expanded=True) as status:
+                rules = "The Occupational Impact must explain how the condition affects work. The Veteran Name and Date must be filled."
+                ai_response = ai_auditor.validate_step("Final Details", rules, get_readable_step_data())
                 
-                # Poll Output Bucket
-                result_data = poll_output_bucket(filename)
-                
-                if result_data:
-                    status.update(label="Processing Complete!", state="complete", expanded=False)
-                    st.divider()
-                    st.subheader("🎉 AWS Processing Result")
-                    st.json(result_data)
+                if ai_response == "PASS":
+                    status.write("AI Validation Passed.")
+                    status.write("Uploading to S3...")
+                    
+                    filename = f"DBQ_Sinus_{json.loads(json_string)['caseID']}.json"
+                    success = upload_to_source(json_string, filename)
+                    
+                    if success:
+                        status.write("Upload complete. Triggering AWS job...")
+                        status.write(f"Polling output bucket for '{filename}'...")
+                        
+                        result_data = poll_output_bucket(filename)
+                        
+                        if result_data:
+                            status.update(label="Processing Complete!", state="complete", expanded=False)
+                            st.divider()
+                            st.subheader("AWS Processing Result")
+                            st.json(result_data)
+                        else:
+                            status.update(label="Processing Failed or Timed Out", state="error")
+                    else:
+                        status.update(label="Upload Failed", state="error")
                 else:
-                    status.update(label="Processing Failed or Timed Out", state="error")
-            else:
-                status.update(label="Upload Failed", state="error")
+                    status.update(label="Validation Error", state="error")
+                    st.error("Assistant's Suggestion:")
+                    st.info(ai_response)
