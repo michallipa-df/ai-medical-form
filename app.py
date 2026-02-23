@@ -476,6 +476,11 @@ elif st.session_state.step == 5:
     
     st.divider()
     
+    # --- FLAGA ROZPOCZĘCIA WYSYŁKI ---
+    # Używamy tej flagi, by wiedzieć kiedy pokazać status na pełnej szerokości
+    if 'aws_upload_started' not in st.session_state:
+        st.session_state.aws_upload_started = False
+
     def generate_tailored_json():
         case_id = ''.join(random.choices(string.digits, k=6))
         output = {"caseID": case_id, "DBQType": "sinus", "DPA": {}}
@@ -485,10 +490,57 @@ elif st.session_state.step == 5:
             output["DPA"][core_key] = {"Question": QUESTION_MAP.get(core_key, core_key), "Answer": value}
         return json.dumps(output, indent=4)
 
-    def trigger_aws_upload():
+    # --- POKAZUJEMY PRZYCISKI TYLKO JEŚLI NIE ROZPOCZĘTO WYSYŁKI ---
+    if not st.session_state.aws_upload_started:
+        col1, col2 = st.columns([1, 4])
+        with col1: 
+            if st.button("Back", use_container_width=True):
+                prev_step()
+                st.rerun()
+                
+        with col2:
+            if st.session_state.current_warning:
+                st.warning(f"**Global Consistency Check Warning:**\n\n{st.session_state.current_warning}")
+                st.info("You can go back to fix the errors, or submit the form anyway.")
+                
+                btn_col1, btn_col2 = st.columns(2)
+                with btn_col1:
+                    if st.button("Re-evaluate Full Form", type="primary", use_container_width=True):
+                        st.session_state.current_warning = None
+                        st.rerun()
+                with btn_col2:
+                    if st.button("Submit to AWS Anyway", type="secondary", use_container_width=True):
+                        st.session_state.aws_upload_started = True
+                        st.rerun()
+            else:
+                if st.button("Run Final Audit and Submit", type="primary", use_container_width=True):
+                    save_step_data()
+                    
+                    global_rules = """
+                    Review the ENTIRE form data for global consistency.
+                    1. Ensure the 'Brief history' narrative does not contradict the listed 'Symptoms checklist' or 'Surgeries'.
+                    2. Check if the 'Occupational Impact' makes sense given the reported severity (e.g., if they claim 0 incapacitating episodes, their occupational impact shouldn't say they are bedridden for weeks).
+                    3. The Veteran Name and Date Submitted must not be empty.
+                    If there are ANY logical contradictions across sections, FAIL and explain the specific contradiction. Otherwise PASS.
+                    """
+                    
+                    with st.spinner("AI is performing a final global consistency check..."):
+                        full_form_data = get_readable_step_data(global_fetch=True)
+                        ai_response = ai_auditor.validate_step("Global Full Form Audit", global_rules, full_form_data)
+                    
+                    if ai_response == "PASS":
+                        st.session_state.aws_upload_started = True
+                        st.rerun()
+                    else:
+                        st.session_state.current_warning = ai_response
+                        st.rerun()
+
+    # --- STATUS WYSYŁKI (Renderowany na zewnątrz kolumn, na całą szerokość) ---
+    if st.session_state.aws_upload_started:
         save_step_data()
         json_string = generate_tailored_json()
-        with st.status("Uploading to AWS...", expanded=True) as status:
+        
+        with st.status("Uploading payload to AWS...", expanded=True) as status:
             filename = f"DBQ_Sinus_{json.loads(json_string)['caseID']}.json"
             success = upload_to_source(json_string, filename)
             
@@ -500,52 +552,14 @@ elif st.session_state.step == 5:
                     status.update(label="Processing Complete!", state="complete", expanded=False)
                     st.divider()
                     st.subheader("🎉 AWS Processing Result")
-                    # Wynik z AWS zostawiamy w czytelnym bloku kodu
                     formatted_result = json.dumps(result_data, indent=4)
                     st.code(formatted_result, language="json")
                 else:
                     status.update(label="Processing Failed or Timed Out", state="error")
             else:
                 status.update(label="Upload Failed", state="error")
-
-    col1, col2 = st.columns([1, 4])
-    with col1: 
-        if st.button("Back", use_container_width=True):
-            prev_step()
+                
+        # Pozwalamy użytkownikowi zresetować proces po błędzie lub sukcesie
+        if st.button("Start New Form", type="primary"):
+            st.session_state.clear()
             st.rerun()
-            
-    with col2:
-        if st.session_state.current_warning:
-            st.warning(f"**Global Consistency Check Warning:**\n\n{st.session_state.current_warning}")
-            st.info("You can go back to fix the errors, or submit the form anyway.")
-            
-            btn_col1, btn_col2 = st.columns(2)
-            with btn_col1:
-                if st.button("Re-evaluate Full Form", type="primary", use_container_width=True):
-                    st.session_state.current_warning = None
-                    st.rerun()
-            with btn_col2:
-                if st.button("Submit to AWS Anyway", type="secondary", use_container_width=True):
-                    trigger_aws_upload()
-        else:
-            if st.button("Run Final Audit and Submit", type="primary", use_container_width=True):
-                save_step_data()
-                
-                # GLOBAL VALIDATION
-                global_rules = """
-                Review the ENTIRE form data for global consistency.
-                1. Ensure the 'Brief history' narrative does not contradict the listed 'Symptoms checklist' or 'Surgeries'.
-                2. Check if the 'Occupational Impact' makes sense given the reported severity (e.g., if they claim 0 incapacitating episodes, their occupational impact shouldn't say they are bedridden for weeks).
-                3. The Veteran Name and Date Submitted must not be empty.
-                If there are ANY logical contradictions across sections, FAIL and explain the specific contradiction. Otherwise PASS.
-                """
-                
-                with st.spinner("AI is performing a final global consistency check..."):
-                    full_form_data = get_readable_step_data(global_fetch=True)
-                    ai_response = ai_auditor.validate_step("Global Full Form Audit", global_rules, full_form_data)
-                
-                if ai_response == "PASS":
-                    trigger_aws_upload()
-                else:
-                    st.session_state.current_warning = ai_response
-                    st.rerun()
