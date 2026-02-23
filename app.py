@@ -500,25 +500,13 @@ elif st.session_state.step == 5:
                     status.update(label="Processing Complete!", state="complete", expanded=False)
                     st.divider()
                     st.subheader("🎉 AWS Processing Result")
-                    
-                    # 💡 ZMIANA: Zamiast małego st.json(), rozwijamy wynik w wielkim bloku kodu
+                    # Wynik z AWS zostawiamy w czytelnym bloku kodu
                     formatted_result = json.dumps(result_data, indent=4)
                     st.code(formatted_result, language="json")
                 else:
                     status.update(label="Processing Failed or Timed Out", state="error")
             else:
                 status.update(label="Upload Failed", state="error")
-
-    # --- WIDOK WYGENEROWANEGO FORMULARZA PRZED WYSYŁKĄ ---
-    if st.session_state.get("Sinusitis__c.Sinus_Q21__c") and st.session_state.get("Sinusitis__c.DBQ__c.Veteran_Name_Text__c"):
-        json_string = generate_tailored_json()
-        
-        st.subheader("📄 Your Generated DBQ Form")
-        st.markdown("Review your complete payload before validation and submission.")
-        
-        # 💡 ZMIANA: Ogromne pole tekstowe do podglądu, w którym od razu widać strukturę JSON
-        st.text_area("Raw JSON Payload", value=json_string, height=450, label_visibility="collapsed")
-        st.markdown("<br>", unsafe_allow_html=True)
 
     col1, col2 = st.columns([1, 4])
     with col1: 
