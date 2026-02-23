@@ -385,8 +385,8 @@ elif st.session_state.step == 2:
     Otherwise, PASS.
     """
     
-    render_navigation("Medications", rules, custom_validation=py_validate_meds)
-
+    render_navigation("Medications", rules, python_validation=py_validate_meds)
+    
 # ==========================================
 # STEP 3: SYMPTOMS & RATING SCHEDULE
 # ==========================================
