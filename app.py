@@ -465,15 +465,17 @@ elif st.session_state.step == 2:
         return None
 
     rules = """
-    Check if the provided medication names, dosages, and frequencies sound like valid medical treatments. 
-    1. Medication Name MUST be a plausible real-world drug (e.g., Flonase, Zyrtec, Claritin, Amoxicillin). If it's random letters like 'asd', FAIL.
+    First, check if the Veteran answered "No" to 'Do you currently take any medication?'. If they answered "No", you MUST immediately output PASS and ignore all other rules.
+    
+    If they answered "Yes", check if the provided medication names, dosages, and frequencies sound like valid medical treatments:
+    1. Medication Name MUST be a plausible real-world drug (e.g., Flonase, Zyrtec, Claritin). If it's random letters like 'asd', FAIL.
     2. Dosage MUST include BOTH a number AND a unit/descriptor. 
        - ACCEPTED units/descriptors include: 'mg', 'mcg', 'ml', 'pill', 'pills', 'tablet', 'tablets', 'spray', 'sprays', 'puff', 'drops'.
-       - IMPORTANT: If the user writes "2 pills", "1 spray", or "2 tablets", this is 100% VALID and you MUST PASS it. Do NOT demand milligrams if they provided "pills" or "sprays".
+       - IMPORTANT: If the user writes "2 pills", "1 spray", or "2 tablets", this is 100% VALID and you MUST PASS it. Do NOT demand milligrams.
        - FAIL ONLY if it is JUST a number (e.g., '2') or gibberish (e.g., 'xcv').
     3. Frequency MUST describe a time interval (e.g., 'daily', 'twice a day', 'as needed'). If it's a single number or gibberish, FAIL.
     
-    If ANY of the required fields are invalid, FAIL. Otherwise, PASS. Do NOT overcomplicate the dosage rules.
+    If ANY of the required fields for ANY medication are invalid, FAIL. Otherwise, PASS.
     """
     
     render_navigation("Medications", rules, python_validation=py_validate_meds)
