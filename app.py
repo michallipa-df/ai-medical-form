@@ -292,7 +292,7 @@ def attempt_validation(step_name, rules):
         st.session_state.current_warning = ai_response
         st.rerun()
 
-def render_navigation(step_name, rules, hard_validation=None):
+def render_navigation(step_name, rules, python_validation=None):
     st.divider()
     col1, col2 = st.columns([1, 4])
     
@@ -307,8 +307,8 @@ def render_navigation(step_name, rules, hard_validation=None):
             btn_col1, btn_col2 = st.columns(2)
             with btn_col1:
                 if st.button("Re-evaluate (I fixed it)", type="primary", use_container_width=True):
-                    if hard_validation:
-                        err = hard_validation()
+                    if python_validation:
+                        err = python_validation()
                         if err:
                             st.error(f"🛑 **Required Field Missing:** {err}")
                             return
@@ -316,8 +316,8 @@ def render_navigation(step_name, rules, hard_validation=None):
             with btn_col2:
                 if st.button("Continue Anyway", type="secondary", use_container_width=True):
                     # Twardy bloker działa NAWET, gdy weteran próbuje wymusić przejście
-                    if hard_validation:
-                        err = hard_validation()
+                    if python_validation:
+                        err = python_validation()
                         if err:
                             st.error(f"🛑 **Cannot bypass:** {err}")
                             return
@@ -325,14 +325,13 @@ def render_navigation(step_name, rules, hard_validation=None):
                     st.rerun()
         else:
             if st.button("Next Step", type="primary", use_container_width=True):
-                if hard_validation:
-                    err = hard_validation()
+                # Twardy bloker przed pierwszym sprawdzeniem AI
+                if python_validation:
+                    err = python_validation()
                     if err:
                         st.error(f"🛑 **Required Field Missing:** {err}")
                         return
                 attempt_validation(step_name, rules)
-
-
 # ==========================================
 # STEP 1: INTRODUCTION & HISTORY
 # ==========================================
