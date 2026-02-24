@@ -348,13 +348,13 @@ if st.session_state.step == 1:
     """)
     
     claim_selection = st.selectbox(
-        "Are you applying for an initial claim or a re-evaluation? *",
+        "Are you applying for an initial claim or a re-evaluation?",
         ["--select an item--", "Initial Claim", "Re-evaluation for Existing"],
         key="Sinusitis__c.Sinusitis_1a__c"
     )
 
     if claim_selection != "--select an item--":
-        st.markdown("Briefly describe the history of your sinus condition:*")
+        st.markdown("Briefly describe the history of your sinus condition:")
         st.text_area(
             "History Area", 
             key="Sinusitis__c.Sinus_Q10c__c", 
@@ -400,7 +400,7 @@ elif st.session_state.step == 2:
     Make sure to provide the exact Name, the Dosage (e.g., 50mcg, 10mg), and the Frequency (e.g., twice a day, as needed). Accuracy here demonstrates the severity of your ongoing treatment.
     """)
     
-    med_trigger = st.radio("Do you currently take any medication(s)? *", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q11__c")
+    med_trigger = st.radio("Do you currently take any medication(s)?", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q11__c")
     
     med_keys = [
         ("Sinusitis__c.Sinus_Q11aaa__c", "Sinusitis__c.Sinus_Q11aab__c", "Sinusitis__c.Sinus_Q11aac__c"),
@@ -410,7 +410,7 @@ elif st.session_state.step == 2:
     
     if med_trigger == "Yes":
         num_meds = st.selectbox(
-            "How many medications? *", 
+            "How many medications?", 
             ["--select--", "1", "2", "3", "More than 3"], 
             key="Sinusitis__c.Sinus_Q11a__c"
         )
@@ -467,10 +467,10 @@ elif st.session_state.step == 3:
     * **Incapacitating Episodes:** The VA defines "incapacitating" very strictly. It means requiring **bed rest prescribed by a physician AND treatment with antibiotics for 4 to 6 weeks**. If you just stayed home from work but did not require prolonged antibiotics, do not overstate this count.
     """)
     
-    sc_trigger = st.radio("Are you seeking service connection for Sinusitis? *", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q48__c")
+    sc_trigger = st.radio("Are you seeking service connection for Sinusitis?", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q48__c")
     if sc_trigger == "Yes":
         st.multiselect(
-            "Select all sinus symptoms that apply: *", 
+            "Select all sinus symptoms that apply:", 
             ["Near Constant Sinusitis", "Headaches caused by sinusitis", "Sinus pain", "Discharge containing pus", "Crusting"], 
             key="Sinusitis__c.Sinus_Q12__c"
         )
@@ -505,7 +505,7 @@ elif st.session_state.step == 4:
     * **Findings:** Briefly explain what the surgeon did or discovered (e.g., "Removed nasal polyps and widened the sinus passages"). This shows the severity of the intervention required.
     """)
     
-    surg_trigger = st.radio("Have you ever had sinus surgery? *", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q17__c")
+    surg_trigger = st.radio("Have you ever had sinus surgery?", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q17__c")
     if surg_trigger == "Yes":
         num_surg = st.selectbox("How many sinus surgeries?", ["1", "2", "3", "4", "More than 4"], key="Sinusitis__c.Sinus_Q17a__c")
         c1, c2 = st.columns(2)
@@ -544,8 +544,8 @@ elif st.session_state.step == 5:
     
     st.markdown("Regardless of your current employment status, how does your sinus condition affect your ability to work? *")
     st.text_area("Occupational Impact Area", key="Sinusitis__c.Sinus_Q21__c", label_visibility="collapsed", height=150)
-    st.text_input("Veteran Name: *", key="Sinusitis__c.DBQ__c.Veteran_Name_Text__c")
-    st.text_input("Date Submitted (MM/DD/YYYY): *", key="Sinusitis__c.Date_Submitted__c")
+    st.text_input("Veteran Name:", key="Sinusitis__c.DBQ__c.Veteran_Name_Text__c")
+    st.text_input("Date Submitted (MM/DD/YYYY):", key="Sinusitis__c.Date_Submitted__c")
     
     st.divider()
     
