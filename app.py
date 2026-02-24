@@ -352,7 +352,7 @@ if st.session_state.step == 1:
     )
 
     if claim_selection != "--select an item--":
-        st.markdown("**Briefly describe the history of your sinus condition:**")
+        st.markdown("Briefly describe the history of your sinus condition:")
         st.text_area(
             "History Area", 
             key="Sinusitis__c.Sinus_Q10c__c", 
@@ -463,7 +463,7 @@ elif st.session_state.step == 3:
             ["Near Constant Sinusitis", "Headaches caused by sinusitis", "Sinus pain", "Discharge containing pus", "Crusting"], 
             key="Sinusitis__c.Sinus_Q12__c"
         )
-        st.markdown("**Please describe the symptoms you selected in detail: ***")
+        st.markdown("Please describe the symptoms you selected in detail:*")
         st.text_area(
             "Detailed Description Area", 
             key="Sinusitis__c.Sinus_Q14__c",
@@ -524,7 +524,7 @@ elif st.session_state.step == 5:
     * If environmental factors at work (dust, AC, chemicals) exacerbate your symptoms.
     """)
     
-    st.markdown("**Regardless of your current employment status, how does your sinus condition affect your ability to work? ***")
+    st.markdown("Regardless of your current employment status, how does your sinus condition affect your ability to work? *")
     st.text_area("Occupational Impact Area", key="Sinusitis__c.Sinus_Q21__c", label_visibility="collapsed", height=150)
     st.text_input("Veteran Name: *", key="Sinusitis__c.DBQ__c.Veteran_Name_Text__c")
     st.text_input("Date Submitted (MM/DD/YYYY): *", key="Sinusitis__c.Date_Submitted__c")
