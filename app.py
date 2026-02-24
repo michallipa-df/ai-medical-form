@@ -606,12 +606,16 @@ elif st.session_state.step == 5:
                         
                         # GLOBAL VALIDATION
                         global_rules = """
-                        Review the ENTIRE form data for global consistency.
-                        1. Ensure the 'Brief history' narrative does not contradict the listed 'Symptoms checklist' or 'Surgeries'.
-                        2. Check if the 'Occupational Impact' makes sense given the reported severity (e.g., if they claim 0 incapacitating episodes, their occupational impact shouldn't say they are bedridden for weeks).
-                        3. The Veteran Name and Date Submitted must not be empty.
-                        If there are ANY logical contradictions across sections, FAIL and explain the specific contradiction. Otherwise PASS.
-                        """
+                    You are performing a STRICT global consistency audit across all form sections. Cross-reference the narrative in 'Brief history' with the answers in the rest of the form.
+                    
+                    CRITICAL CHECKS:
+                    1. SYMPTOMS CONTRADICTION: If the Veteran selected "No" for 'Seeking service connection?' or listed no symptoms, but their 'Brief history' explicitly describes ongoing pain, congestion, or other symptoms, you MUST output FAIL and warn them that their history implies symptoms but they selected "No" in the Symptoms section.
+                    2. SURGERY CONTRADICTION: If the Veteran selected "No" for 'Ever had sinus surgery?', but their 'Brief history' or other text mentions having an operation, polyps removed, or any sinus surgery, you MUST output FAIL and explain the discrepancy.
+                    3. SEVERITY CONTRADICTION: Check if the 'Occupational Impact' contradicts the 'Incapacitating episodes' (e.g., claiming 0 episodes but stating they are completely bedridden for weeks).
+                    4. MISSING DATA: The Veteran Name and Date Submitted must not be empty.
+                    
+                    If ANY of these logical contradictions are found, output FAIL and explicitly state what contradicts what. Otherwise, output PASS.
+                    """
                         
                         with st.spinner("AI is performing a final global consistency check..."):
                             full_form_data = get_readable_step_data(global_fetch=True)
