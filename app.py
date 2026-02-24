@@ -550,8 +550,13 @@ elif st.session_state.step == 5:
     st.divider()
     
     # Inicjalizacja flagi sterującej pełnoekranowym uploadem
+    # Inicjalizacja flagi sterującej pełnoekranowym uploadem
     if 'aws_upload_triggered' not in st.session_state:
         st.session_state.aws_upload_triggered = False
+        
+    # NOWA FLAGA: Blokuje przycisk Submit do czasu udanej walidacji
+    if 'final_validation_passed' not in st.session_state:
+        st.session_state.final_validation_passed = False
 
     def generate_tailored_json():
         case_id = ''.join(random.choices(string.digits, k=6))
@@ -562,7 +567,7 @@ elif st.session_state.step == 5:
             output["DPA"][core_key] = {"Question": QUESTION_MAP.get(core_key, core_key), "Answer": value}
         return json.dumps(output, indent=4)
 
-    # NOWE: Funkcja twardej walidacji dla Kroku 5
+    # TWARDA WALIDACJA KROKU 5
     def validate_step_5():
         if not st.session_state.get("Sinusitis__c.DBQ__c.Veteran_Name_Text__c", "").strip():
             return "Veteran Name is strictly required to sign and submit this document."
@@ -575,6 +580,7 @@ elif st.session_state.step == 5:
         col1, col2 = st.columns([1, 4])
         with col1: 
             if st.button("Back", use_container_width=True):
+                st.session_state.final_validation_passed = False # Resetujemy flagę przy cofaniu
                 prev_step()
                 st.rerun()
                 
@@ -585,17 +591,16 @@ elif st.session_state.step == 5:
                 
                 btn_col1, btn_col2 = st.columns(2)
                 with btn_col1:
-                    if st.button("Validate Full Form", type="primary", use_container_width=True):
-                        # ZMIANA: Dodana weryfikacja przed walidacją
+                    if st.button("Re-evaluate Full Form", type="primary", use_container_width=True):
                         err = validate_step_5()
                         if err:
                             st.error(f"🛑 {err}")
                         else:
                             st.session_state.current_warning = None
+                            st.session_state.final_validation_passed = False
                             st.rerun()
                 with btn_col2:
                     if st.button("Submit to AWS Anyway", type="secondary", use_container_width=True):
-                        # ZMIANA: Dodana weryfikacja przed wymuszonym przejściem
                         err = validate_step_5()
                         if err:
                             st.error(f"🛑 Cannot bypass: {err}")
@@ -603,37 +608,43 @@ elif st.session_state.step == 5:
                             st.session_state.aws_upload_triggered = True
                             st.rerun()
             else:
-                if st.button("Run Final Audit and Submit", type="primary", use_container_width=True):
-                    # ZMIANA: Dodana weryfikacja przed głównym audytem
-                    err = validate_step_5()
-                    if err:
-                        st.error(f"🛑 **Required Field Missing:** {err}")
-                    else:
-                        save_step_data()
-                        
-                        # GLOBAL VALIDATION
-                        global_rules = """
-                    You are performing a STRICT global consistency audit across all form sections. Cross-reference the narrative in 'Brief history' with the answers in the rest of the form.
-                    
-                    CRITICAL CHECKS:
-                    1. SYMPTOMS CONTRADICTION: If the Veteran selected "No" for 'Seeking service connection?' or listed no symptoms, but their 'Brief history' explicitly describes ongoing pain, congestion, or other symptoms, you MUST output FAIL and warn them that their history implies symptoms but they selected "No" in the Symptoms section.
-                    2. SURGERY CONTRADICTION: If the Veteran selected "No" for 'Ever had sinus surgery?', but their 'Brief history' or other text mentions having an operation, polyps removed, or any sinus surgery, you MUST output FAIL and explain the discrepancy.
-                    3. SEVERITY CONTRADICTION: Check if the 'Occupational Impact' contradicts the 'Incapacitating episodes' (e.g., claiming 0 episodes but stating they are completely bedridden for weeks).
-                    4. MISSING DATA: The Veteran Name and Date Submitted must not be empty.
-                    
-                    If ANY of these logical contradictions are found, output FAIL and explicitly state what contradicts what. Otherwise, output PASS.
-                    """
-                        
-                        with st.spinner("AI is performing a final global consistency check..."):
-                            full_form_data = get_readable_step_data(global_fetch=True)
-                            ai_response = ai_auditor.validate_step("Global Full Form Audit", global_rules, full_form_data)
-                        
-                        if ai_response == "PASS":
-                            st.session_state.aws_upload_triggered = True
-                            st.rerun()
+                # TUTAJ ZASZŁA ZMIANA: Podział na Validate i Submit
+                if st.session_state.final_validation_passed:
+                    st.success("✅ AI Audit passed! No logical contradictions found. Your form is ready.")
+                    if st.button("Submit to AWS", type="primary", use_container_width=True):
+                        st.session_state.aws_upload_triggered = True
+                        st.rerun()
+                else:
+                    if st.button("Validate Full Form", type="primary", use_container_width=True):
+                        err = validate_step_5()
+                        if err:
+                            st.error(f"🛑 **Required Field Missing:** {err}")
                         else:
-                            st.session_state.current_warning = ai_response
-                            st.rerun()
+                            save_step_data()
+                            
+                            # GLOBAL VALIDATION
+                            global_rules = """
+                            You are performing a STRICT global consistency audit across all form sections. Cross-reference the narrative in 'Brief history' with the answers in the rest of the form.
+                            
+                            CRITICAL CHECKS:
+                            1. SYMPTOMS CONTRADICTION: If the Veteran selected "No" for 'Seeking service connection?' or listed no symptoms, but their 'Brief history' explicitly describes ongoing pain, congestion, or other symptoms, you MUST output FAIL and warn them that their history implies symptoms but they selected "No" in the Symptoms section.
+                            2. SURGERY CONTRADICTION: If the Veteran selected "No" for 'Ever had sinus surgery?', but their 'Brief history' or other text mentions having an operation, polyps removed, or any sinus surgery, you MUST output FAIL and explain the discrepancy.
+                            3. SEVERITY CONTRADICTION: Check if the 'Occupational Impact' contradicts the 'Incapacitating episodes' (e.g., claiming 0 episodes but stating they are completely bedridden for weeks).
+                            4. MISSING DATA: The Veteran Name and Date Submitted must not be empty.
+                            
+                            If ANY of these logical contradictions are found, output FAIL and explicitly state what contradicts what. Otherwise, output PASS.
+                            """
+                            
+                            with st.spinner("AI is performing a final global consistency check..."):
+                                full_form_data = get_readable_step_data(global_fetch=True)
+                                ai_response = ai_auditor.validate_step("Global Full Form Audit", global_rules, full_form_data)
+                            
+                            if ai_response == "PASS":
+                                st.session_state.final_validation_passed = True
+                                st.rerun()
+                            else:
+                                st.session_state.current_warning = ai_response
+                                st.rerun()
 
     # 2. LOGIKA WYSYŁKI AWS NA PEŁNEJ SZEROKOŚCI EKRANU (Poza kolumnami)
     if st.session_state.aws_upload_triggered:
