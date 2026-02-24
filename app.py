@@ -192,6 +192,8 @@ if 'aws_upload_started' not in st.session_state:
     st.session_state.aws_upload_started = False
 if 'force_restore' not in st.session_state:
     st.session_state.force_restore = False
+if 'step_validation_passed' not in st.session_state:
+    st.session_state.step_validation_passed = False
 
 # POTĘŻNY FIX: Wymuszone przywracanie stanu z sejfu (form_data) przy zmianie strony lub po załadowaniu draftu
 if st.session_state.force_restore:
@@ -270,14 +272,16 @@ def get_readable_step_data(global_fetch=False):
 def proceed_to_next():
     save_step_data()
     st.session_state.current_warning = None
+    st.session_state.step_validation_passed = False # <--- Reset flagi
     st.session_state.step += 1
-    st.session_state.force_restore = True # <--- Chroni dane przy Next
+    st.session_state.force_restore = True
 
 def prev_step():
     save_step_data()
     st.session_state.current_warning = None
+    st.session_state.step_validation_passed = False # <--- Reset flagi
     st.session_state.step -= 1
-    st.session_state.force_restore = True # <--- Chroni dane przy Back
+    st.session_state.force_restore = True
 
 def attempt_validation(step_name, rules):
     save_step_data()
@@ -286,10 +290,12 @@ def attempt_validation(step_name, rules):
         ai_response = ai_auditor.validate_step(step_name, rules, step_data)
         
     if ai_response == "PASS":
-        proceed_to_next()
+        st.session_state.current_warning = None
+        st.session_state.step_validation_passed = True # <--- Włączenie zielonego światła
         st.rerun()
     else:
         st.session_state.current_warning = ai_response
+        st.session_state.step_validation_passed = False
         st.rerun()
 
 def render_navigation(step_name, rules, python_validation=None):
@@ -302,11 +308,11 @@ def render_navigation(step_name, rules, python_validation=None):
     with col2:
         if st.session_state.current_warning:
             st.warning(f"**Warning:**\n\n{st.session_state.current_warning}")
-            st.info("You can fix the error and click 'Validate', or force continue.")
+            st.info("You can fix the error and click 'Validate Again', or force continue.")
             
             btn_col1, btn_col2 = st.columns(2)
             with btn_col1:
-                if st.button("Validate", type="primary", use_container_width=True):
+                if st.button("Validate Again", type="primary", use_container_width=True):
                     if python_validation:
                         err = python_validation()
                         if err:
@@ -324,14 +330,21 @@ def render_navigation(step_name, rules, python_validation=None):
                     proceed_to_next()
                     st.rerun()
         else:
-            if st.button("Next Step", type="primary", use_container_width=True):
-                # Twardy bloker przed pierwszym sprawdzeniem AI
-                if python_validation:
-                    err = python_validation()
-                    if err:
-                        st.error(f"🛑 **Required Field Missing:** {err}")
-                        return
-                attempt_validation(step_name, rules)
+            # ROZDZIELENIE WALIDACJI OD PRZEJŚCIA DALEJ
+            if st.session_state.step_validation_passed:
+                st.success("✅ AI Validation passed! Everything looks good.")
+                if st.button("Proceed to Next Step", type="primary", use_container_width=True):
+                    proceed_to_next()
+                    st.rerun()
+            else:
+                if st.button("Validate Step", type="primary", use_container_width=True):
+                    # Twardy bloker przed pierwszym sprawdzeniem AI
+                    if python_validation:
+                        err = python_validation()
+                        if err:
+                            st.error(f"🛑 **Required Field Missing:** {err}")
+                            return
+                    attempt_validation(step_name, rules)
 # ==========================================
 # STEP 1: INTRODUCTION & HISTORY
 # ==========================================
