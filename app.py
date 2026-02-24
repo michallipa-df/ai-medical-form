@@ -608,6 +608,9 @@ elif st.session_state.step == 5:
 
     # TWARDA WALIDACJA KROKU 5
     def validate_step_5():
+        if not st.session_state.get("Sinusitis__c.Sinus_Q21__c", "").strip():
+            return "Occupational Impact cannot be empty. Please describe how the condition affects your work."
+            
         if not st.session_state.get("Sinusitis__c.DBQ__c.Veteran_Name_Text__c", "").strip():
             return "Veteran Name is strictly required to sign and submit this document."
             
@@ -669,16 +672,17 @@ elif st.session_state.step == 5:
                             save_step_data()
                             
                             # GLOBAL VALIDATION
+                            # GLOBAL VALIDATION
                             global_rules = """
                             You are performing a STRICT global consistency audit across all form sections. Cross-reference the narrative in 'Brief history' with the answers in the rest of the form.
                             
                             CRITICAL CHECKS:
-                            1. SYMPTOMS CONTRADICTION: If the Veteran selected "No" for 'Seeking service connection?' or listed no symptoms, but their 'Brief history' explicitly describes ongoing pain, congestion, or other symptoms, you MUST output FAIL and warn them that their history implies symptoms but they selected "No" in the Symptoms section.
-                            2. SURGERY CONTRADICTION: If the Veteran selected "No" for 'Ever had sinus surgery?', but their 'Brief history' or other text mentions having an operation, polyps removed, or any sinus surgery, you MUST output FAIL and explain the discrepancy.
-                            3. SEVERITY CONTRADICTION: Check if the 'Occupational Impact' contradicts the 'Incapacitating episodes' (e.g., claiming 0 episodes but stating they are completely bedridden for weeks).
-                            4. MISSING DATA: The Veteran Name and Date Submitted must not be empty.
+                            1. VAGUE OCCUPATIONAL IMPACT (CRITICAL): Evaluate the text in 'Occupational Impact'. If the answer is generic, extremely short, or gibberish (e.g., "It hurts", "asd", "bad", "no impact"), you MUST output FAIL. Demand that the Veteran explain exactly how the symptoms (like sick days, lack of focus, environmental triggers) affect their daily ability to work.
+                            2. SYMPTOMS CONTRADICTION: If the Veteran selected "No" for 'Seeking service connection?' or listed no symptoms, but their 'Brief history' explicitly describes ongoing pain, congestion, or other symptoms, output FAIL and warn them.
+                            3. SURGERY CONTRADICTION: If the Veteran selected "No" for 'Ever had sinus surgery?', but their 'Brief history' mentions having an operation or sinus surgery, output FAIL.
+                            4. SEVERITY CONTRADICTION: Check if the 'Occupational Impact' contradicts the 'Incapacitating episodes' (e.g., claiming 0 episodes but stating they are completely bedridden for weeks in the impact section).
                             
-                            If ANY of these logical contradictions are found, output FAIL and explicitly state what contradicts what. Otherwise, output PASS.
+                            If ANY of these logical contradictions or vague answers are found, output FAIL and explicitly state what needs correction. Otherwise, output PASS.
                             """
                             
                             with st.spinner("AI is performing a final global consistency check..."):
