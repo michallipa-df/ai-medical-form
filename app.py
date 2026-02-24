@@ -6,6 +6,7 @@ import string
 import boto3
 import time
 from botocore.exceptions import ClientError
+from streamlit_local_storage import LocalStorage
 
 # --- GROQ AI VALIDATOR ---
 class GroqMedicalScribe:
@@ -173,6 +174,8 @@ QUESTION_MAP = {
 # --- APP CONFIG ---
 st.set_page_config(page_title="Sinusitis DBQ Validation", layout="centered")
 
+# Initialize local storage
+localS = LocalStorage()
 # Initialize LLM
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
 ai_auditor = GroqMedicalScribe(api_key=GROQ_API_KEY)
@@ -185,7 +188,7 @@ if 'form_data' not in st.session_state:
 if 'current_warning' not in st.session_state:
     st.session_state.current_warning = None
 
-# Restore form state logic
+# Podstawowe przywracanie stanu z form_data do widgetów
 for key, value in st.session_state.form_data.items():
     if value is not None and key not in st.session_state:
         st.session_state[key] = value
@@ -197,84 +200,51 @@ def save_step_data():
         if key in st.session_state:
             st.session_state.form_data[key] = st.session_state[key]
 
-def get_readable_step_data(global_fetch=False):
-    readable_data = {}
-    for key in ALL_KEYS_ORDERED:
-        if global_fetch:
-            val = st.session_state.form_data.get(key)
-        else:
-            val = st.session_state.get(key)
-            
-        if val not in [None, "", "--select--", "--select an item--"]:
-            core_key = key.replace("Sinusitis__c.", "")
-            label = QUESTION_MAP.get(core_key, core_key)
-            readable_data[label] = val
-    return readable_data
-
-def proceed_to_next():
-    save_step_data()
-    st.session_state.current_warning = None
-    st.session_state.step += 1
-
-def prev_step():
-    save_step_data()
-    st.session_state.current_warning = None
-    st.session_state.step -= 1
-
-def attempt_validation(step_name, rules):
-    save_step_data()
-    step_data = get_readable_step_data()
-    with st.spinner("Assistant is reviewing your answers..."):
-        ai_response = ai_auditor.validate_step(step_name, rules, step_data)
-        
-    if ai_response == "PASS":
-        proceed_to_next()
-        st.rerun()
-    else:
-        st.session_state.current_warning = ai_response
-        st.rerun()
-
-def render_navigation(step_name, rules, python_validation=None):
-    """Reusable navigation UI that handles Warnings and Continue Anyway logic."""
-    st.divider()
-    col1, col2 = st.columns([1, 4])
+# ========================================== 
+# 💾 SIDEBAR:(LOCAL STORAGE)
+# ==========================================
+with st.sidebar:
+    st.header("💾 Save & Resume")
+    st.info("Save your progress to this browser and return later.")
     
-    with col1:
-        if st.button("Back", use_container_width=True):
-            prev_step()
-            st.rerun()
-            
-    with col2:
-        if st.session_state.current_warning:
-            st.warning(f"**Warning:**\n\n{st.session_state.current_warning}")
-            st.info("You can fix the error and click 'Validate', or force continue.")
-            
-            btn_col1, btn_col2 = st.columns(2)
-            with btn_col1:
-                if st.button("Validate", type="primary", use_container_width=True):
-                    if python_validation:
-                        err = python_validation()
-                        if err:
-                            st.session_state.current_warning = err
-                            st.rerun()
-                            return
-                    attempt_validation(step_name, rules)
-            with btn_col2:
-                if st.button("Continue Anyway", type="secondary", use_container_width=True):
-                    proceed_to_next()
-                    st.rerun()
+    if st.button("Save Progress", use_container_width=True, type="primary"):
+        save_step_data()
+        draft_payload = {
+            "step": st.session_state.step,
+            "form_data": st.session_state.form_data
+        }
+        # Zapis do przeglądarki
+        localS.setItem("dbq_draft", json.dumps(draft_payload))
+        st.success("✅ Progress saved! You can safely close this tab.")
+        
+    st.divider()
+    
+    if st.button("Load Saved Progress", use_container_width=True):
+        saved_draft = localS.getItem("dbq_draft")
+        if saved_draft:
+            try:
+                # Parsowanie danych
+                draft_dict = json.loads(saved_draft) if isinstance(saved_draft, str) else saved_draft
+                
+                # Wstrzyknięcie do sesji
+                st.session_state.step = draft_dict.get("step", 1)
+                st.session_state.form_data = draft_dict.get("form_data", {})
+                st.session_state.current_warning = None
+                
+                st.success("✅ Draft loaded successfully!")
+                time.sleep(1)
+                st.rerun()
+            except Exception as e:
+                st.error("Failed to load draft. Data might be corrupted.")
         else:
-            if st.button("Next Step", type="primary", use_container_width=True):
-                if python_validation:
-                    err = python_validation()
-                    if err:
-                        st.session_state.current_warning = err
-                        st.rerun()
-                        return
-                attempt_validation(step_name, rules)
+            st.warning("No saved progress found on this browser.")
+            
+    if st.button("Start Fresh Form", type="secondary", use_container_width=True):
+        localS.deleteAll()
+        st.session_state.clear()
+        st.rerun()
 
-st.progress(st.session_state.step / TOTAL_STEPS)
-
+# (Dalej zostawiasz już definicje funkcji get_readable_step_data(), handle_next_step() itd.)
 # ==========================================
 # STEP 1: INTRODUCTION & HISTORY
 # ==========================================
