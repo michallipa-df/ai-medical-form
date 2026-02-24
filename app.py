@@ -354,7 +354,7 @@ if st.session_state.step == 1:
     )
 
     if claim_selection != "--select an item--":
-        st.markdown("Briefly describe the history of your sinus condition:")
+        st.markdown("Briefly describe the history of your sinus condition:*")
         st.text_area(
             "History Area", 
             key="Sinusitis__c.Sinus_Q10c__c", 
