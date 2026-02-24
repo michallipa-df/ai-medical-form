@@ -446,8 +446,10 @@ elif st.session_state.step == 2:
 
     rules = """
     Check if the provided medication names, dosages, and frequencies sound like valid medical treatments. 
-    If they wrote absolute gibberish (e.g., Name: 'asd', Dosage: 'xyz'), output an error hint.
-    Otherwise, PASS.
+    1. Medication Name MUST be a plausible real-world drug (e.g., Flonase, Zyrtec, Claritin, Amoxicillin). If it's random letters like 'asd' or 'qwe', FAIL.
+    2. Dosage MUST include BOTH a number AND a unit of measurement (e.g., '10mg', '50mcg', '1 pill', '2 sprays'). If the user typed just a number like '1' or random text like 'xcv', FAIL and explicitly tell them to include the measurement unit.
+    3. Frequency MUST describe a time interval (e.g., 'daily', 'twice a day', 'as needed'). If it's a single number or gibberish, FAIL.
+    If ANY of the required fields for ANY medication are invalid or missing, FAIL. Otherwise, PASS.
     """
     
     render_navigation("Medications", rules, python_validation=py_validate_meds)
