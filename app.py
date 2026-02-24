@@ -257,7 +257,6 @@ with st.sidebar:
         st.rerun()
 
 # --- HELPER FUNCTIONS ---
-# --- HELPER FUNCTIONS ---
 def get_readable_step_data(global_fetch=False):
     readable_data = {}
     for key in ALL_KEYS_ORDERED:
@@ -496,7 +495,7 @@ elif st.session_state.step == 3:
     if sc_trigger == "Yes":
         st.multiselect(
             "Select all sinus symptoms that apply:", 
-            ["Near Constant Sinusitis", "Headaches caused by sinusitis", "Sinus pain", "Discharge containing pus", "Crusting"], 
+            ["Crusting","Discharge containing pus","Headaches caused by sinusitis","Near Constant Sinusitis","Sinus pain"], 
             key="Sinusitis__c.Sinus_Q12__c"
         )
         st.markdown("Please describe the symptoms you selected in detail:*")
