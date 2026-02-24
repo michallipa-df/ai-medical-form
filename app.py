@@ -277,15 +277,13 @@ def attempt_validation(step_name, rules):
     else:
         st.session_state.current_warning = ai_response
         st.rerun()
-
 def render_navigation(step_name, rules, python_validation=None):
     st.divider()
     col1, col2 = st.columns([1, 4])
     
     with col1:
-        if st.button("Back", use_container_width=True):
-            prev_step()
-            st.rerun()
+        # TUTAJ BYŁ BŁĄD. Przywrócono on_click, żeby zapisywało stan ZANIM przeładuje stronę
+        st.button("Back", on_click=prev_step, use_container_width=True)
             
     with col2:
         if st.session_state.current_warning:
@@ -314,7 +312,11 @@ def render_navigation(step_name, rules, python_validation=None):
                         st.session_state.current_warning = err
                         st.rerun()
                         return
-                attempt_validation(step_name, rules)# ==========================================
+                attempt_validation(step_name, rules)
+
+
+
+# ==========================================
 # STEP 1: INTRODUCTION & HISTORY
 # ==========================================
 if st.session_state.step == 1:
