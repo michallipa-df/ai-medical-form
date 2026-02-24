@@ -187,11 +187,21 @@ if 'form_data' not in st.session_state:
     st.session_state.form_data = {k: None for k in ALL_KEYS_ORDERED}
 if 'current_warning' not in st.session_state:
     st.session_state.current_warning = None
+if 'aws_upload_started' not in st.session_state:
+    st.session_state.aws_upload_started = False
+if 'force_restore' not in st.session_state:
+    st.session_state.force_restore = False
 
-# Podstawowe przywracanie stanu z form_data do widgetów
-for key, value in st.session_state.form_data.items():
-    if value is not None and key not in st.session_state:
-        st.session_state[key] = value
+# POTĘŻNY FIX: Wymuszone przywracanie stanu z sejfu (form_data) przy zmianie strony lub po załadowaniu draftu
+if st.session_state.force_restore:
+    for key, value in st.session_state.form_data.items():
+        if value is not None:
+            st.session_state[key] = value
+    st.session_state.force_restore = False
+else:
+    for key, value in st.session_state.form_data.items():
+        if value is not None and key not in st.session_state:
+            st.session_state[key] = value
 
 TOTAL_STEPS = 5
 
@@ -199,7 +209,6 @@ def save_step_data():
     for key in ALL_KEYS_ORDERED:
         if key in st.session_state:
             st.session_state.form_data[key] = st.session_state[key]
-
 # ========================================== 
 # 💾 SIDEBAR:(LOCAL STORAGE)
 # ==========================================
@@ -230,6 +239,8 @@ with st.sidebar:
                 st.session_state.step = draft_dict.get("step", 1)
                 st.session_state.form_data = draft_dict.get("form_data", {})
                 st.session_state.current_warning = None
+                st.session_state.aws_upload_started = False
+                st.session_state.force_restore = True # <--- Dodana wymuszona odnowa
                 
                 st.success("✅ Draft loaded successfully!")
                 time.sleep(1)
@@ -245,6 +256,7 @@ with st.sidebar:
         st.rerun()
 
 # --- HELPER FUNCTIONS ---
+# --- HELPER FUNCTIONS ---
 def get_readable_step_data(global_fetch=False):
     readable_data = {}
     for key in ALL_KEYS_ORDERED:
@@ -259,11 +271,13 @@ def proceed_to_next():
     save_step_data()
     st.session_state.current_warning = None
     st.session_state.step += 1
+    st.session_state.force_restore = True # <--- Chroni dane przy Next
 
 def prev_step():
     save_step_data()
     st.session_state.current_warning = None
     st.session_state.step -= 1
+    st.session_state.force_restore = True # <--- Chroni dane przy Back
 
 def attempt_validation(step_name, rules):
     save_step_data()
@@ -277,12 +291,12 @@ def attempt_validation(step_name, rules):
     else:
         st.session_state.current_warning = ai_response
         st.rerun()
+
 def render_navigation(step_name, rules, python_validation=None):
     st.divider()
     col1, col2 = st.columns([1, 4])
     
     with col1:
-        # TUTAJ BYŁ BŁĄD. Przywrócono on_click, żeby zapisywało stan ZANIM przeładuje stronę
         st.button("Back", on_click=prev_step, use_container_width=True)
             
     with col2:
