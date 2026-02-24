@@ -244,8 +244,77 @@ with st.sidebar:
         st.session_state.clear()
         st.rerun()
 
-# (Dalej zostawiasz już definicje funkcji get_readable_step_data(), handle_next_step() itd.)
-# ==========================================
+# --- HELPER FUNCTIONS ---
+def get_readable_step_data(global_fetch=False):
+    readable_data = {}
+    for key in ALL_KEYS_ORDERED:
+        val = st.session_state.form_data.get(key) if global_fetch else st.session_state.get(key)
+        if val not in [None, "", "--select--", "--select an item--"]:
+            core_key = key.replace("Sinusitis__c.", "")
+            label = QUESTION_MAP.get(core_key, core_key)
+            readable_data[label] = val
+    return readable_data
+
+def proceed_to_next():
+    save_step_data()
+    st.session_state.current_warning = None
+    st.session_state.step += 1
+
+def prev_step():
+    save_step_data()
+    st.session_state.current_warning = None
+    st.session_state.step -= 1
+
+def attempt_validation(step_name, rules):
+    save_step_data()
+    step_data = get_readable_step_data()
+    with st.spinner("Assistant is reviewing your answers..."):
+        ai_response = ai_auditor.validate_step(step_name, rules, step_data)
+        
+    if ai_response == "PASS":
+        proceed_to_next()
+        st.rerun()
+    else:
+        st.session_state.current_warning = ai_response
+        st.rerun()
+
+def render_navigation(step_name, rules, python_validation=None):
+    st.divider()
+    col1, col2 = st.columns([1, 4])
+    
+    with col1:
+        if st.button("Back", use_container_width=True):
+            prev_step()
+            st.rerun()
+            
+    with col2:
+        if st.session_state.current_warning:
+            st.warning(f"**Assistant's Note:**\n\n{st.session_state.current_warning}")
+            st.info("You can fix the error and click 'Re-evaluate', or force continue.")
+            
+            btn_col1, btn_col2 = st.columns(2)
+            with btn_col1:
+                if st.button("Re-evaluate (I fixed it)", type="primary", use_container_width=True):
+                    if python_validation:
+                        err = python_validation()
+                        if err:
+                            st.session_state.current_warning = err
+                            st.rerun()
+                            return
+                    attempt_validation(step_name, rules)
+            with btn_col2:
+                if st.button("Continue Anyway", type="secondary", use_container_width=True):
+                    proceed_to_next()
+                    st.rerun()
+        else:
+            if st.button("Next Step", type="primary", use_container_width=True):
+                if python_validation:
+                    err = python_validation()
+                    if err:
+                        st.session_state.current_warning = err
+                        st.rerun()
+                        return
+                attempt_validation(step_name, rules)# ==========================================
 # STEP 1: INTRODUCTION & HISTORY
 # ==========================================
 if st.session_state.step == 1:
