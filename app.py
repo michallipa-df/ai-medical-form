@@ -485,8 +485,10 @@ elif st.session_state.step == 3:
         st.selectbox("Incapacitating episodes (last 12 months): *", ["0", "1", "2", "3 or more"], key="Sinusitis__c.Sinus_Q16__c")
 
     rules = """
-    1. Every symptom checked in the 'Symptoms checklist' MUST be explicitly mentioned or described in the 'Detailed symptom description' text area. If a checked symptom is missing from the description, FAIL and ask them to add it.
-    2. Check for contradictions regarding incapacitating episodes. If the text description mentions "staying in bed", "bed rest", or "missing weeks of work", but 'Incapacitating episodes' is '0', warn them that their text implies incapacitation while their numerical selection is 0.
+    Focus strictly on Symptoms and Severity. IGNORE ANY MENTIONS OF SURGERY IN THIS STEP.
+    1. Cross-reference the 'Brief history' from Step 1. If 'Brief history' describes ongoing symptoms (pain, congestion, etc.), but they selected "No" for 'Seeking service connection' or didn't check any symptoms here, FAIL.
+    2. Every symptom checked in the 'Symptoms checklist' MUST be explicitly described in the 'Detailed symptom description'. If missing, FAIL.
+    3. Check for contradictions regarding incapacitating episodes. If the text mentions "bed rest" or "missing weeks of work", but 'Incapacitating episodes' is '0', FAIL.
     """
     render_navigation("Symptoms", rules)
 
@@ -517,7 +519,12 @@ elif st.session_state.step == 4:
             label_visibility="collapsed"
         )
 
-    rules = "If the Veteran selected 'Yes' for surgery, they MUST provide the surgery Date, Type, and write a coherent description in 'Findings'. If 'Findings' is empty or too short, FAIL and ask them to describe the outcome of the surgery."
+    rules = """
+    Focus strictly on Surgeries. 
+    1. Cross-reference the 'Brief history' (and any other text). If the Veteran explicitly mentioned having a sinus surgery, operation, or polyps removed in their history, but they selected "No" for 'Ever had sinus surgery?' in this step, FAIL and tell them they must select "Yes" because they mentioned it in their history.
+    2. If they selected 'Yes' for surgery, they MUST provide the Date, Type, and write a coherent description in 'Findings'. If 'Findings' is empty or gibberish, FAIL.
+    """
+    
     render_navigation("Surgeries", rules)
 
 # ==========================================
