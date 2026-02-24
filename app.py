@@ -511,9 +511,11 @@ elif st.session_state.step == 3:
 
     rules = """
     Focus strictly on Symptoms and Severity. IGNORE ANY MENTIONS OF SURGERY IN THIS STEP.
-    1. Cross-reference the 'Brief history' from Step 1. If 'Brief history' describes ongoing symptoms (pain, congestion, etc.), but they selected "No" for 'Seeking service connection' or didn't check any symptoms here, FAIL.
-    2. Every symptom checked in the 'Symptoms checklist' MUST be explicitly described in the 'Detailed symptom description'. If missing, FAIL.
-    3. Check for contradictions regarding incapacitating episodes. If the text mentions "bed rest" or "missing weeks of work", but 'Incapacitating episodes' is '0', FAIL.
+    1. Cross-reference the 'Brief history' from Step 1. If 'Brief history' describes ongoing symptoms, but they selected "No" for 'Seeking service connection' or didn't check any symptoms here, FAIL.
+    2. Every symptom checked in the 'Symptoms checklist' MUST be explicitly described in the 'Detailed symptom description'. If a checked symptom is missing from the text, FAIL.
+    3. VAGUE ANSWER DETECTION: If the description is too generic (e.g., "I get bad headaches", "It hurts", "They are severe") without specific context like frequency, duration, or triggers, FAIL. Demand more specific functional details.
+    4. STRICT 'INCAPACITATING' DEFINITION (CRITICAL): The VA strictly defines "incapacitating" as requiring bed rest PRESCRIBED BY A PHYSICIAN AND treatment with antibiotics for 4 to 6 weeks. If the user's text mentions "incapacitating episodes" or "staying home from work", but DOES NOT explicitly mention physician-prescribed bed rest and antibiotics, you MUST output FAIL. Tell them regular sick days do not count as incapacitating and they must clarify.
+    5. Contradiction check: If the text describes severe bed rest/antibiotics, but the dropdown for episodes is '0', FAIL.
     """
     render_navigation("Symptoms", rules)
 
