@@ -437,9 +437,29 @@ elif st.session_state.step == 2:
             check_limit = min(count, 3)
             
             for i in range(check_limit):
-                if not st.session_state.get(med_keys[i][0], "").strip(): return f"Medication #{i+1} Name is missing."
-                if not st.session_state.get(med_keys[i][1], "").strip(): return f"Medication #{i+1} Dosage is missing. Please specify the amount."
-                if not st.session_state.get(med_keys[i][2], "").strip(): return f"Medication #{i+1} Frequency is missing. Please specify how often it is taken."
+                med_name = st.session_state.get(med_keys[i][0], "").strip()
+                med_dose = st.session_state.get(med_keys[i][1], "").strip()
+                med_freq = st.session_state.get(med_keys[i][2], "").strip()
+
+                # Twarda walidacja nazwy
+                if len(med_name) < 2: 
+                    return f"Medication #{i+1} Name is missing or too short."
+                
+                # Twarda walidacja dawki
+                if not med_dose: 
+                    return f"Medication #{i+1} Dosage is missing."
+                if med_dose.isdigit():
+                    return f"Medication #{i+1} Dosage '{med_dose}' is invalid. You must include a unit (e.g., '10mg', '1 pill')."
+                if len(med_dose) < 2:
+                    return f"Medication #{i+1} Dosage '{med_dose}' is too short."
+
+                # Twarda walidacja częstotliwości
+                if not med_freq: 
+                    return f"Medication #{i+1} Frequency is missing."
+                if med_freq.isdigit():
+                    return f"Medication #{i+1} Frequency cannot be just a number."
+                if len(med_freq) < 3:
+                     return f"Medication #{i+1} Frequency '{med_freq}' is too short. Please specify (e.g., 'daily', 'as needed')."
             
             if count == 4 and not st.session_state.get("Sinusitis__c.Sinus_Q11b__c", "").strip():
                  return "You selected 'More than 3' medications. Please list the additional ones in the text area."
