@@ -5,6 +5,7 @@ import random
 import string
 import boto3
 import time
+import re
 from botocore.exceptions import ClientError
 from streamlit_local_storage import LocalStorage
 
@@ -525,7 +526,20 @@ elif st.session_state.step == 4:
     2. If they selected 'Yes' for surgery, they MUST provide the Date, Type, and write a coherent description in 'Findings'. If 'Findings' is empty or gibberish, FAIL.
     """
     
-    render_navigation("Surgeries", rules)
+    def validate_step_4():
+        if st.session_state.get("Sinusitis__c.Sinus_Q17__c") == "Yes":
+            date_str = st.session_state.get("Sinusitis__c.Sinus_Q17aaa__c", "").strip()
+            if not date_str:
+                return "Surgery Date is required."
+            # TWARDE WYMUSZENIE FORMATU MM/YYYY
+            if not re.match(r"^(0[1-9]|1[0-2])\/\d{4}$", date_str):
+                return "Surgery Date MUST be strictly in MM/YYYY format (e.g., 05/2015)."
+                
+            if not st.session_state.get("Sinusitis__c.Sinus_Q17aab__c", "").strip():
+                return "Surgery findings description cannot be empty."
+        return None
+
+    render_navigation("Surgeries", rules, python_validation=validate_step_4)
 
 # ==========================================
 # STEP 5: FINAL DETAILS & SUBMIT
@@ -571,8 +585,15 @@ elif st.session_state.step == 5:
     def validate_step_5():
         if not st.session_state.get("Sinusitis__c.DBQ__c.Veteran_Name_Text__c", "").strip():
             return "Veteran Name is strictly required to sign and submit this document."
-        if not st.session_state.get("Sinusitis__c.Date_Submitted__c", "").strip():
+            
+        date_str = st.session_state.get("Sinusitis__c.Date_Submitted__c", "").strip()
+        if not date_str:
             return "Date Submitted is strictly required."
+            
+        # TWARDE WYMUSZENIE FORMATU MM/DD/YYYY
+        if not re.match(r"^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/\d{4}$", date_str):
+            return "Date Submitted MUST be exactly in MM/DD/YYYY format (e.g., 12/25/2024)."
+            
         return None
 
     # 1. POKAZUJEMY PRZYCISKI TYLKO, JEŚLI WYSYŁKA JESZCZE NIE RUSZYŁA
