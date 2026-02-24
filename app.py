@@ -302,7 +302,7 @@ def render_navigation(step_name, rules, python_validation=None):
     with col2:
         if st.session_state.current_warning:
             st.warning(f"**Warning:**\n\n{st.session_state.current_warning}")
-            st.info("You can fix the error and click 'Re-evaluate', or force continue.")
+            st.info("You can fix the error and click 'Validate', or force continue.")
             
             btn_col1, btn_col2 = st.columns(2)
             with btn_col1:
