@@ -292,7 +292,7 @@ def attempt_validation(step_name, rules):
         st.session_state.current_warning = ai_response
         st.rerun()
 
-def render_navigation(step_name, rules, python_validation=None):
+def render_navigation(step_name, rules, hard_validation=None):
     st.divider()
     col1, col2 = st.columns([1, 4])
     
@@ -301,33 +301,36 @@ def render_navigation(step_name, rules, python_validation=None):
             
     with col2:
         if st.session_state.current_warning:
-            st.warning(f"**Warning:**\n\n{st.session_state.current_warning}")
-            st.info("You can fix the error and click 'Validate', or force continue.")
+            st.warning(f"**Assistant's Note:**\n\n{st.session_state.current_warning}")
+            st.info("You can fix the error and click 'Re-evaluate', or force continue.")
             
             btn_col1, btn_col2 = st.columns(2)
             with btn_col1:
-                if st.button("Validate", type="primary", use_container_width=True):
-                    if python_validation:
-                        err = python_validation()
+                if st.button("Re-evaluate (I fixed it)", type="primary", use_container_width=True):
+                    if hard_validation:
+                        err = hard_validation()
                         if err:
-                            st.session_state.current_warning = err
-                            st.rerun()
+                            st.error(f"🛑 **Required Field Missing:** {err}")
                             return
                     attempt_validation(step_name, rules)
             with btn_col2:
                 if st.button("Continue Anyway", type="secondary", use_container_width=True):
+                    # Twardy bloker działa NAWET, gdy weteran próbuje wymusić przejście
+                    if hard_validation:
+                        err = hard_validation()
+                        if err:
+                            st.error(f"🛑 **Cannot bypass:** {err}")
+                            return
                     proceed_to_next()
                     st.rerun()
         else:
             if st.button("Next Step", type="primary", use_container_width=True):
-                if python_validation:
-                    err = python_validation()
+                if hard_validation:
+                    err = hard_validation()
                     if err:
-                        st.session_state.current_warning = err
-                        st.rerun()
+                        st.error(f"🛑 **Required Field Missing:** {err}")
                         return
                 attempt_validation(step_name, rules)
-
 
 
 # ==========================================
@@ -372,8 +375,16 @@ if st.session_state.step == 1:
     If ANY of the required elements based on their claim type are missing, FAIL and list exactly which elements are missing.
     """
     
+    def validate_step_1():
+        if st.session_state.get("Sinusitis__c.Sinusitis_1a__c") in [None, "--select an item--"]:
+            return "You must select whether this is an Initial Claim or a Re-evaluation."
+        if not st.session_state.get("Sinusitis__c.Sinus_Q10c__c", "").strip():
+            return "The History Area cannot be entirely empty."
+        return None
+
     if claim_selection != "--select an item--":
-        render_navigation("History", rules)
+        render_navigation("History", rules, python_validation=validate_step_1)
+
 
 # ==========================================
 # STEP 2: MEDICATIONS
@@ -441,7 +452,6 @@ elif st.session_state.step == 2:
     """
     
     render_navigation("Medications", rules, python_validation=py_validate_meds)
-    
 # ==========================================
 # STEP 3: SYMPTOMS & RATING SCHEDULE
 # ==========================================
@@ -544,6 +554,14 @@ elif st.session_state.step == 5:
             output["DPA"][core_key] = {"Question": QUESTION_MAP.get(core_key, core_key), "Answer": value}
         return json.dumps(output, indent=4)
 
+    # NOWE: Funkcja twardej walidacji dla Kroku 5
+    def validate_step_5():
+        if not st.session_state.get("Sinusitis__c.DBQ__c.Veteran_Name_Text__c", "").strip():
+            return "Veteran Name is strictly required to sign and submit this document."
+        if not st.session_state.get("Sinusitis__c.Date_Submitted__c", "").strip():
+            return "Date Submitted is strictly required."
+        return None
+
     # 1. POKAZUJEMY PRZYCISKI TYLKO, JEŚLI WYSYŁKA JESZCZE NIE RUSZYŁA
     if not st.session_state.aws_upload_triggered:
         col1, col2 = st.columns([1, 4])
@@ -560,35 +578,50 @@ elif st.session_state.step == 5:
                 btn_col1, btn_col2 = st.columns(2)
                 with btn_col1:
                     if st.button("Validate Full Form", type="primary", use_container_width=True):
-                        st.session_state.current_warning = None
-                        st.rerun()
+                        # ZMIANA: Dodana weryfikacja przed walidacją
+                        err = validate_step_5()
+                        if err:
+                            st.error(f"🛑 {err}")
+                        else:
+                            st.session_state.current_warning = None
+                            st.rerun()
                 with btn_col2:
                     if st.button("Submit to AWS Anyway", type="secondary", use_container_width=True):
-                        st.session_state.aws_upload_triggered = True
-                        st.rerun()
+                        # ZMIANA: Dodana weryfikacja przed wymuszonym przejściem
+                        err = validate_step_5()
+                        if err:
+                            st.error(f"🛑 Cannot bypass: {err}")
+                        else:
+                            st.session_state.aws_upload_triggered = True
+                            st.rerun()
             else:
                 if st.button("Run Final Audit and Submit", type="primary", use_container_width=True):
-                    save_step_data()
-                    
-                    # GLOBAL VALIDATION
-                    global_rules = """
-                    Review the ENTIRE form data for global consistency.
-                    1. Ensure the 'Brief history' narrative does not contradict the listed 'Symptoms checklist' or 'Surgeries'.
-                    2. Check if the 'Occupational Impact' makes sense given the reported severity (e.g., if they claim 0 incapacitating episodes, their occupational impact shouldn't say they are bedridden for weeks).
-                    3. The Veteran Name and Date Submitted must not be empty.
-                    If there are ANY logical contradictions across sections, FAIL and explain the specific contradiction. Otherwise PASS.
-                    """
-                    
-                    with st.spinner("AI is performing a final global consistency check..."):
-                        full_form_data = get_readable_step_data(global_fetch=True)
-                        ai_response = ai_auditor.validate_step("Global Full Form Audit", global_rules, full_form_data)
-                    
-                    if ai_response == "PASS":
-                        st.session_state.aws_upload_triggered = True
-                        st.rerun()
+                    # ZMIANA: Dodana weryfikacja przed głównym audytem
+                    err = validate_step_5()
+                    if err:
+                        st.error(f"🛑 **Required Field Missing:** {err}")
                     else:
-                        st.session_state.current_warning = ai_response
-                        st.rerun()
+                        save_step_data()
+                        
+                        # GLOBAL VALIDATION
+                        global_rules = """
+                        Review the ENTIRE form data for global consistency.
+                        1. Ensure the 'Brief history' narrative does not contradict the listed 'Symptoms checklist' or 'Surgeries'.
+                        2. Check if the 'Occupational Impact' makes sense given the reported severity (e.g., if they claim 0 incapacitating episodes, their occupational impact shouldn't say they are bedridden for weeks).
+                        3. The Veteran Name and Date Submitted must not be empty.
+                        If there are ANY logical contradictions across sections, FAIL and explain the specific contradiction. Otherwise PASS.
+                        """
+                        
+                        with st.spinner("AI is performing a final global consistency check..."):
+                            full_form_data = get_readable_step_data(global_fetch=True)
+                            ai_response = ai_auditor.validate_step("Global Full Form Audit", global_rules, full_form_data)
+                        
+                        if ai_response == "PASS":
+                            st.session_state.aws_upload_triggered = True
+                            st.rerun()
+                        else:
+                            st.session_state.current_warning = ai_response
+                            st.rerun()
 
     # 2. LOGIKA WYSYŁKI AWS NA PEŁNEJ SZEROKOŚCI EKRANU (Poza kolumnami)
     if st.session_state.aws_upload_triggered:
