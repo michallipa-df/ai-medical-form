@@ -247,11 +247,11 @@ def render_navigation(step_name, rules, python_validation=None):
     with col2:
         if st.session_state.current_warning:
             st.warning(f"**Warning:**\n\n{st.session_state.current_warning}")
-            st.info("You can fix the error and click 'Re-evaluate', or force continue.")
+            st.info("You can fix the error and click 'Validate', or force continue.")
             
             btn_col1, btn_col2 = st.columns(2)
             with btn_col1:
-                if st.button("Re-evaluate (I fixed it)", type="primary", use_container_width=True):
+                if st.button("Validate", type="primary", use_container_width=True):
                     if python_validation:
                         err = python_validation()
                         if err:
@@ -521,7 +521,7 @@ elif st.session_state.step == 5:
             
             btn_col1, btn_col2 = st.columns(2)
             with btn_col1:
-                if st.button("Re-evaluate Full Form", type="primary", use_container_width=True):
+                if st.button("Validate Full Form", type="primary", use_container_width=True):
                     st.session_state.current_warning = None
                     st.rerun()
             with btn_col2:
