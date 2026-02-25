@@ -98,7 +98,7 @@ def poll_output_bucket(filename, initial_wait=30, timeout=180):
     
     placeholder = st.empty()
     for i in range(initial_wait, 0, -1):
-        placeholder.info(f"AWS is processing... polling will start in {i} seconds.")
+        placeholder.info(f"Processing... polling will start in {i} seconds.")
         time.sleep(1)
     
     start_time = time.time()
@@ -119,7 +119,7 @@ def poll_output_bucket(filename, initial_wait=30, timeout=180):
             placeholder.error(f"Error: {e}")
             return None
             
-    placeholder.error("Timeout: AWS took too long to process the file.")
+    placeholder.error("Timeout: too long to process the file.")
     return None
 
 # --- KEY MAPPING ---
@@ -254,7 +254,7 @@ with st.sidebar:
         else:
             st.warning("No saved progress found on this browser.")
             
-    if st.button("Start Fresh Form", type="secondary", use_container_width=True):
+    if st.button("Start New Form", type="secondary", use_container_width=True):
         localS.deleteAll()
         st.session_state.clear()
         st.rerun()
@@ -597,7 +597,7 @@ elif st.session_state.step == 5:
     * If environmental factors at work (dust, AC, chemicals) exacerbate your symptoms.
     """)
     
-    st.markdown("Regardless of your current employment status, how does your sinus condition affect your ability to work? *")
+    st.markdown("Regardless of your current employment status, how does your sinus condition affect your ability to work?")
     st.text_area("Occupational Impact Area", key="Sinusitis__c.Sinus_Q21__c", label_visibility="collapsed", height=150)
     
     # --- AUTO-WYPEŁNIANIE DATY ---
@@ -668,7 +668,7 @@ elif st.session_state.step == 5:
                 
         with col2:
             if st.session_state.current_warning:
-                st.warning(f"**Global Consistency Check Warning:**\n\n{st.session_state.current_warning}")
+                st.warning(f"**Consistency Check Warning:**\n\n{st.session_state.current_warning}")
                 st.info("You can go back to fix the errors, or submit the form anyway.")
                 
                 btn_col1, btn_col2 = st.columns(2)
@@ -692,7 +692,7 @@ elif st.session_state.step == 5:
             else:
                 # TUTAJ ZASZŁA ZMIANA: Podział na Validate i Submit
                 if st.session_state.final_validation_passed:
-                    st.success("✅ AI Audit passed! No logical contradictions found. Your form is ready.")
+                    st.success("✅ Audit passed! No logical contradictions found. Your form is ready.")
                     if st.button("Submit", type="primary", use_container_width=True):
                         st.session_state.aws_upload_triggered = True
                         st.rerun()
@@ -739,7 +739,7 @@ elif st.session_state.step == 5:
             success = upload_to_source(json_string, filename)
             
             if success:
-                status.write("Upload complete. Triggering AWS job...")
+                status.write("Upload complete. Triggering job...")
                 result_data = poll_output_bucket(filename)
                 
                 if result_data:
