@@ -479,17 +479,13 @@ elif st.session_state.step == 2:
         return None
 
     rules = """
-    First, check if the Veteran answered "No" to 'Do you currently take any medication?'. If they answered "No", you MUST immediately output PASS and ignore all other rules.
+    First, check if the Veteran answered "No" to 'Do you currently take any medication?'. If "No", output PASS immediately.
     
-    If they answered "Yes", check if the provided medication names, dosages, and frequencies sound like valid medical treatments:
-    1. Medication Name MUST be a plausible real-world drug (e.g., Flonase, Zyrtec, Claritin). If it's random letters like 'asd', FAIL.
-    2. Dosage MUST include BOTH a number AND a unit/descriptor. 
-       - ACCEPTED units/descriptors include: 'mg', 'mcg', 'ml', 'pill', 'pills', 'tablet', 'tablets', 'spray', 'sprays', 'puff', 'drops'.
-       - IMPORTANT: If the user writes "2 pills", "1 spray", or "2 tablets", this is 100% VALID and you MUST PASS it. Do NOT demand milligrams.
-       - FAIL ONLY if it is JUST a number (e.g., '2') or gibberish (e.g., 'xcv').
-    3. Frequency MUST describe a time interval (e.g., 'daily', 'twice a day', 'as needed'). If it's a single number or gibberish, FAIL.
-    
-    If ANY of the required fields for ANY medication are invalid, FAIL. Otherwise, PASS.
+    If they answered "Yes", your ONLY job is to check the Medication Name:
+    1. The Name MUST be a plausible, real-world medication, drug, or supplement (e.g., Tylenol, Lisinopril, Flonase, Vitamin C, Aspirin). 
+    2. DO NOT judge if the medication is used for sinusitis. We accept ANY real medication.
+    3. FAIL ONLY if the Name is obvious keyboard smash or completely fake (like 'asd', 'qwe', '123').
+    4. Ignore strict rules for Dosage and Frequency. As long as the Name is a real-world drug/supplement, output PASS.
     """
     
     render_navigation("Medications", rules, python_validation=py_validate_meds)
