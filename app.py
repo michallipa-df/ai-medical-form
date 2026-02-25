@@ -7,7 +7,8 @@ import boto3
 import time
 import re
 from botocore.exceptions import ClientError
-from streamlit_local_storage import LocalStorage
+from streamlit_local_storage import LocalStorage 
+from datetime import datetime
 
 # --- GROQ AI VALIDATOR ---
 class GroqMedicalScribe:
@@ -623,19 +624,28 @@ elif st.session_state.step == 5:
 
     # TWARDA WALIDACJA KROKU 5
     def validate_step_5():
-        if not st.session_state.get("Sinusitis__c.Sinus_Q21__c", "").strip():
-            return "Occupational Impact cannot be empty. Please describe how the condition affects your work."
-            
-        if not st.session_state.get("Sinusitis__c.DBQ__c.Veteran_Name_Text__c", "").strip():
+        # Walidacja Imienia i Nazwiska
+        name = st.session_state.get("Sinusitis__c.DBQ__c.Veteran_Name_Text__c", "").strip()
+        if not name:
             return "Veteran Name is strictly required to sign and submit this document."
-            
+        
+        # Sprawdzamy, czy są minimum 2 słowa i czy są to tylko litery/myślniki/apostrofy (bez cyfr i znaków specjalnych)
+        if len(name.split()) < 2 or not re.match(r"^[A-Za-zÀ-ÖØ-öø-ÿ\-\' ]+$", name):
+            return "Please enter your full legal name (First and Last Name). Numbers or special characters are not allowed."
+
+        # Walidacja Daty
         date_str = st.session_state.get("Sinusitis__c.Date_Submitted__c", "").strip()
         if not date_str:
             return "Date Submitted is strictly required."
             
-        # TWARDE WYMUSZENIE FORMATU MM/DD/YYYY
+        # Twarde wymuszenie samego formatu MM/DD/YYYY (żeby regex nie przepuścił bzdur)
         if not re.match(r"^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/\d{4}$", date_str):
             return "Date Submitted MUST be exactly in MM/DD/YYYY format (e.g., 12/25/2024)."
+            
+        # Twarde wymuszenie DZISIEJSZEJ daty
+        today_str = datetime.now().strftime("%m/%d/%Y")
+        if date_str != today_str:
+            return f"Date Submitted MUST be exactly today's date ({today_str}). Past or future dates are invalid."
             
         return None
 
