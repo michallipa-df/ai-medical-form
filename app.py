@@ -612,9 +612,12 @@ elif st.session_state.step == 4:
                 st.selectbox("Which side of your sinuses were operated on?", ["--select--", "Right", "Left", "Both"], key="Sinusitis__c.Sinus_Q17c__c")
 
     rules = """
-    Focus strictly on Surgeries. 
-    1. Cross-reference the 'Brief history' (and any other text). If the Veteran explicitly mentioned having a sinus surgery, operation, or polyps removed in their history, but they selected "No" for 'Ever had sinus surgery?' in this step, FAIL and tell them they must select "Yes" because they mentioned it in their history.
-    2. If they selected 'Yes' for surgery, check the 'Findings / Description' text for EACH listed surgery. The descriptions must be coherent. If ANY surgery findings are gibberish (e.g., 'asd', 'qwe'), output FAIL.
+    Focus strictly on Surgeries and perform a deep logical audit.
+    1. HISTORY CHECK: If the Veteran explicitly mentioned sinus surgery or polyp removal in their 'Brief history' (Step 1), but selected "No" here, FAIL.
+    2. CONTRADICTION CHECK (TYPE vs FINDINGS): Cross-reference the selected 'Type' (Radical or Endoscopic) with the text in 'Findings / Description' for EACH surgery. If the dropdown is 'Radical' but the text says 'endoscopic' (or vice versa), output FAIL and point out the exact contradiction.
+    3. GLOBAL DROPDOWN CONSISTENCY: Look at the global answers for "Which sinus was operated on?" and "Which side...". If the individual 'Findings' texts mention specific sinuses or sides (e.g., "maxillary", "right side") that CONTRADICT the global dropdown selections, output FAIL.
+    4. ADDITIONAL SURGERIES DETAILS: If 'More than 4' surgeries were selected, the 'Additional Surgeries (>4) Details' text MUST explicitly list both the 'Type' (e.g., endoscopic/radical) AND 'Date' (month/year) for the extra surgeries. If it only contains vague text without dates and types, FAIL.
+    5. GIBBERISH: If ANY text field contains gibberish ('asd', 'qwe'), FAIL.
     """
     
     def validate_step_4():
@@ -648,6 +651,13 @@ elif st.session_state.step == 4:
             if num_surg == "More than 4":
                 if not st.session_state.get("Sinusitis__c.Sinus_Q17d__c", "").strip():
                     return "You selected 'More than 4' surgeries. Please provide details in the Additional Surgeries text area."
+            
+            # NOWE: Twarda walidacja globalnych dropdownów na dole
+            if st.session_state.get("Sinusitis__c.Sinus_Q17b__c", "--select--") == "--select--":
+                return "Please select which sinus was operated on (or select 'Unknown')."
+            if st.session_state.get("Sinusitis__c.Sinus_Q17c__c", "--select--") == "--select--":
+                return "Please select which side of your sinuses were operated on."
+                
         return None
 
     render_navigation("Surgeries", rules, python_validation=validate_step_4)
