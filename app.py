@@ -131,13 +131,13 @@ ALL_KEYS_ORDERED = [
     "Sinusitis__c.Sinus_Q11acc__c", "Sinusitis__c.Sinus_Q11b__c", "Sinusitis__c.Sinus_Q48__c",
     "Sinusitis__c.Sinus_Q34__c", "Sinusitis__c.Sinus_Q12__c", "Sinusitis__c.Sinus_Q13__c",
     "Sinusitis__c.Sinus_Q14__c", "Sinusitis__c.Sinus_Q15__c", "Sinusitis__c.Sinus_Q16__c",
-    "Sinusitis__c.Sinus_Q17__c", "Sinusitis__c.Sinus_Q17a__c", 
-    "Sinusitis__c.Sinus_Q17aaa__c", "Sinusitis__c.Sinus_Q17aaa1__c", "Sinusitis__c.Sinus_Q17aab__c", 
-    "Sinusitis__c.Sinus_Q17aba__c", "Sinusitis__c.Sinus_Q17aba1__c", "Sinusitis__c.Sinus_Q17abb__c", 
-    "Sinusitis__c.Sinus_Q17abc__c", "Sinusitis__c.Sinus_Q17abc1__c", "Sinusitis__c.Sinus_Q17aca__c", 
-    "Sinusitis__c.Sinus_Q17acb__c", "Sinusitis__c.Sinus_Q17acb1__c", "Sinusitis__c.Sinus_Q17acc__c", 
-    "Sinusitis__c.Sinus_Q17b__c", "Sinusitis__c.Sinus_Q17c__c", "Sinusitis__c.Sinus_Q17d__c", 
-    "Sinusitis__c.Sinus_Q20__c", "Sinusitis__c.Sinus_Q20a__c", "Sinusitis__c.Sinus_Q20b__c", "Sinusitis__c.Sinus_Q20c__c",
+    "Sinusitis__c.Sinus_Q17__c", "Sinusitis__c.Sinus_Q17a__c", "Sinusitis__c.Sinus_Q17aaa__c",
+    "Sinusitis__c.Sinus_Q17aaa1__c", "Sinusitis__c.Sinus_Q17aab__c", "Sinusitis__c.Sinus_Q17aba__c",
+    "Sinusitis__c.Sinus_Q17aba1__c", "Sinusitis__c.Sinus_Q17abb__c", "Sinusitis__c.Sinus_Q17abc__c",
+    "Sinusitis__c.Sinus_Q17abc1__c", "Sinusitis__c.Sinus_Q17aca__c", "Sinusitis__c.Sinus_Q17acb__c",
+    "Sinusitis__c.Sinus_Q17acb1__c", "Sinusitis__c.Sinus_Q17acc__c", "Sinusitis__c.Sinus_Q17b__c",
+    "Sinusitis__c.Sinus_Q17c__c", "Sinusitis__c.Sinus_Q17d__c", "Sinusitis__c.Sinus_Q20__c",
+    "Sinusitis__c.Sinus_Q20a__c", "Sinusitis__c.Sinus_Q20b__c", "Sinusitis__c.Sinus_Q20c__c",
     "Sinusitis__c.Sinus_Q20d__c", "Sinusitis__c.Sinus_Q35__c", "Sinusitis__c.Sinus_Q35a__c",
     "Sinusitis__c.Sinus_Q35b__c", "Sinusitis__c.Sinus_Q35c__c", "Sinusitis__c.Sinus_Q36__c",
     "Sinusitis__c.Sinus_Q36a__c", "Sinusitis__c.Sinus_Q36b__c", "Sinusitis__c.Sinus_Q36c__c",
@@ -163,22 +163,16 @@ QUESTION_MAP = {
     "Sinus_Q11a__c": "How many medications?",
     "Sinus_Q11aaa__c": "Medication #1 Name", "Sinus_Q11aba__c": "Medication #2 Name", "Sinus_Q11aca__c": "Medication #3 Name",
     "Sinus_Q48__c": "Seeking service connection?",
-    "Sinus_Q34__c": "Indicate the sinus/type of sinusitis affected",
-    "Sinus_Q15__c": "Number of non-incapacitating episodes (last 12 months)",
-    "Sinus_Q16__c": "Number of incapacitating episodes (last 12 months)",
+    "Sinus_Q34__c": "Sinuses affected",
     "Sinus_Q12__c": "Symptoms checklist",
     "Sinus_Q14__c": "Detailed symptom description",
+    "Sinus_Q15__c": "Non-incapacitating episodes (12mo)",
+    "Sinus_Q16__c": "Incapacitating episodes (12mo)",
     "Sinus_Q17__c": "Ever had sinus surgery?",
     "Sinus_Q17a__c": "How many sinus surgeries?",
-    "Sinus_Q17aaa__c": "Surgery #1 Date", "Sinus_Q17aaa1__c": "Surgery #1 Type", "Sinus_Q17aab__c": "Surgery #1 Findings",
-    "Sinus_Q17aba__c": "Surgery #2 Date", "Sinus_Q17aba1__c": "Surgery #2 Type", "Sinus_Q17abb__c": "Surgery #2 Findings",
-    "Sinus_Q17abc__c": "Surgery #3 Date", "Sinus_Q17abc1__c": "Surgery #3 Type", "Sinus_Q17aca__c": "Surgery #3 Findings",
-    "Sinus_Q17acb__c": "Surgery #4 Date", "Sinus_Q17acb1__c": "Surgery #4 Type", "Sinus_Q17acc__c": "Surgery #4 Findings",
-    "Sinus_Q17b__c": "Which sinus was operated on?",
-    "Sinus_Q17c__c": "Which side of your sinuses were operated on?",
-    "Sinus_Q17d__c": "Additional Surgeries (>4) Details",
     "Sinus_Q21__c": "Occupational Impact"
 }
+
 # --- APP CONFIG ---
 st.set_page_config(page_title="Sinusitis DBQ Validation", layout="centered")
 
@@ -201,10 +195,6 @@ if 'force_restore' not in st.session_state:
     st.session_state.force_restore = False
 if 'step_validation_passed' not in st.session_state:
     st.session_state.step_validation_passed = False
-if 'step_validation_passed' not in st.session_state:
-    st.session_state.step_validation_passed = False
-if 'validated_step_data' not in st.session_state:
-    st.session_state.validated_step_data = None
 
 # POTĘŻNY FIX: Wymuszone przywracanie stanu z sejfu (form_data) przy zmianie strony lub po załadowaniu draftu
 if st.session_state.force_restore:
@@ -283,18 +273,16 @@ def get_readable_step_data(global_fetch=False):
 def proceed_to_next():
     save_step_data()
     st.session_state.current_warning = None
-    st.session_state.step_validation_passed = False
-    st.session_state.validated_step_data = None # Reset zdjęcia
+    st.session_state.step_validation_passed = False # <--- Reset flagi
     st.session_state.step += 1
-    st.session_state.force_restore = True 
+    st.session_state.force_restore = True
 
 def prev_step():
     save_step_data()
     st.session_state.current_warning = None
-    st.session_state.step_validation_passed = False
-    st.session_state.validated_step_data = None # Reset zdjęcia
+    st.session_state.step_validation_passed = False # <--- Reset flagi
     st.session_state.step -= 1
-    st.session_state.force_restore = True 
+    st.session_state.force_restore = True
 
 def attempt_validation(step_name, rules):
     save_step_data()
@@ -304,34 +292,19 @@ def attempt_validation(step_name, rules):
         
     if ai_response == "PASS":
         st.session_state.current_warning = None
-        st.session_state.step_validation_passed = True
-        st.session_state.validated_step_data = step_data # <--- ROBIMY ZDJĘCIE POPRAWNYCH DANYCH
+        st.session_state.step_validation_passed = True # <--- Włączenie zielonego światła
         st.rerun()
     else:
         st.session_state.current_warning = ai_response
         st.session_state.step_validation_passed = False
-        st.session_state.validated_step_data = None
         st.rerun()
 
 def render_navigation(step_name, rules, python_validation=None):
     st.divider()
-    
-    # --- MECHANIZM ODBIERANIA PRZEPUSTKI ---
-    if st.session_state.get('step_validation_passed'):
-        save_step_data() # Zaciągamy to, co weteran ma teraz na ekranie
-        current_data = get_readable_step_data()
-        # Jeśli obecne dane różnią się od zwalidowanego "zdjęcia", zabieramy przycisk
-        if current_data != st.session_state.get('validated_step_data'):
-            st.session_state.step_validation_passed = False
-            st.session_state.validated_step_data = None
-            st.session_state.current_warning = None # Czyścimy stare błędy, by zacząć na czysto
-    # ---------------------------------------
-
     col1, col2 = st.columns([1, 4])
     
     with col1:
-        if st.session_state.step > 1:
-            st.button("Back", on_click=prev_step, use_container_width=True)
+        st.button("Back", on_click=prev_step, use_container_width=True)
             
     with col2:
         if st.session_state.current_warning:
@@ -349,6 +322,7 @@ def render_navigation(step_name, rules, python_validation=None):
                     attempt_validation(step_name, rules)
             with btn_col2:
                 if st.button("Continue Anyway", type="secondary", use_container_width=True):
+                    # Twardy bloker działa NAWET, gdy weteran próbuje wymusić przejście
                     if python_validation:
                         err = python_validation()
                         if err:
@@ -357,13 +331,15 @@ def render_navigation(step_name, rules, python_validation=None):
                     proceed_to_next()
                     st.rerun()
         else:
+            # ROZDZIELENIE WALIDACJI OD PRZEJŚCIA DALEJ
             if st.session_state.step_validation_passed:
-                st.success("✅ AI Validation passed! Everything looks good.")
+                st.success("✅ Validation passed! Everything looks good.")
                 if st.button("Proceed to Next Step", type="primary", use_container_width=True):
                     proceed_to_next()
                     st.rerun()
             else:
                 if st.button("Validate Step", type="primary", use_container_width=True):
+                    # Twardy bloker przed pierwszym sprawdzeniem AI
                     if python_validation:
                         err = python_validation()
                         if err:
@@ -522,28 +498,19 @@ elif st.session_state.step == 3:
     st.info("""
     **Guidance for this section:**
     This section directly impacts your rating. 
-    * **Symptoms & Affected Sinuses:** Select all that apply.
-    * **Detailed Description:** You must write a paragraph explaining *every single symptom* and *affected sinus* you checked. Describe how the pain feels, how often the discharge occurs, etc.
-    * **Non-incapacitating episodes:** Typical flare-ups (headaches, pain, discharge) that DO NOT require prolonged antibiotics or bed rest.
-    * **Incapacitating episodes:** The VA defines this very strictly. It means requiring **bed rest prescribed by a physician AND treatment with antibiotics for 4 to 6 weeks**. If you just stayed home from work but did not require prolonged antibiotics, do not overstate this count.
+    * **Symptoms Checklist:** Only select symptoms you currently experience.
+    * **Detailed Description:** You must write a paragraph explaining *every single symptom* you checked above. Describe how the pain feels, how often the discharge occurs, etc.
+    * **Incapacitating Episodes:** The VA defines "incapacitating" very strictly. It means requiring **bed rest prescribed by a physician AND treatment with antibiotics for 4 to 6 weeks**. If you just stayed home from work but did not require prolonged antibiotics, do not overstate this count.
     """)
     
-    sc_trigger = st.radio("Are you service connected or seeking service connection for Sinusitis? *", ["Yes", "No"], index=0, key="Sinusitis__c.Sinus_Q48__c")
-    
+    sc_trigger = st.radio("Are you service connected or seeking service connection for Sinusitis?", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q48__c")
     if sc_trigger == "Yes":
         st.multiselect(
-            "Indicate the sinus/type of sinusitis currently affected by the chronic sinusitis: *",
-            ["Maxillary", "Frontal", "Ethmoid", "Sphenoid", "Pansinusitis", "Unknown"],
-            key="Sinusitis__c.Sinus_Q34__c"
-        )
-        
-        st.multiselect(
-            "Select all sinus symptoms that apply: *", 
-            ["Crusting", "Discharge containing pus", "Headaches caused by sinusitis", "Near Constant Sinusitis", "Sinus pain"], 
+            "Select all sinus symptoms that apply:", 
+            ["Crusting","Discharge containing pus","Headaches caused by sinusitis","Near Constant Sinusitis","Sinus pain"], 
             key="Sinusitis__c.Sinus_Q12__c"
         )
-        
-        st.markdown("**Please describe the symptoms you selected in detail:** *")
+        st.markdown("Please describe the symptoms you selected in detail:*")
         st.text_area(
             "Detailed Description Area", 
             key="Sinusitis__c.Sinus_Q14__c",
@@ -551,40 +518,18 @@ elif st.session_state.step == 3:
             height=150
         )
         
-        st.selectbox("Number of non-incapacitating episodes (headaches, pain, discharge, crusting) during the last 12 months: *", ["--select--", "0", "1", "2", "3", "4", "5", "6", "7 or more"], key="Sinusitis__c.Sinus_Q15__c")
-        st.selectbox("Number of incapacitating episodes (requiring 4-6 weeks of antibiotics) over the last 12 months: *", ["--select--", "0", "1", "2", "3 or more"], key="Sinusitis__c.Sinus_Q16__c")
+        st.selectbox("Incapacitating episodes (last 12 months):", ["0", "1", "2", "3 or more"], key="Sinusitis__c.Sinus_Q16__c")
 
     rules = """
     Focus strictly on Symptoms and Severity. IGNORE ANY MENTIONS OF SURGERY IN THIS STEP.
     1. Cross-reference the 'Brief history' from Step 1. If 'Brief history' describes ongoing symptoms, but they selected "No" for 'Seeking service connection' or didn't check any symptoms here, FAIL.
-    2. SYMPTOMS & SINUS CROSS-CHECK: Every symptom and affected sinus checked in the multiselects MUST be explicitly supported or described in the 'Detailed symptom description'. If a checked symptom or specific sinus (e.g., "Maxillary") is completely ignored in the text, or if the text contradicts the selected sinuses, FAIL.
+    2. Every symptom checked in the 'Symptoms checklist' MUST be explicitly described in the 'Detailed symptom description'. If a checked symptom is missing from the text, FAIL.
     3. VAGUE ANSWER DETECTION: If the description is too generic (e.g., "I get bad headaches", "It hurts", "They are severe") without specific context like frequency, duration, or triggers, FAIL. Demand more specific functional details.
-    4. EPISODES CROSS-CHECK: 
-       - If the user selects > 0 for 'Incapacitating episodes', the text MUST explicitly mention physician-prescribed bed rest AND treatment with antibiotics for 4-6 weeks. If missing, FAIL.
-       - If the user selects > 0 for 'Non-incapacitating episodes', the text MUST describe these regular flare-ups (headaches, discharge, etc.).
-       - If they select '0' for both but describe constant severe flare-ups, or if they select multiple episodes but write "I feel fine", FAIL due to contradiction.
-    5. GIBBERISH: If ANY text field contains gibberish ('asd', 'qwe'), FAIL.
+    4. STRICT 'INCAPACITATING' DEFINITION (CRITICAL): The VA strictly defines "incapacitating" as requiring bed rest PRESCRIBED BY A PHYSICIAN AND treatment with antibiotics for 4 to 6 weeks. If the user's text mentions "incapacitating episodes" or "staying home from work", but DOES NOT explicitly mention physician-prescribed bed rest and antibiotics, you MUST output FAIL. Tell them regular sick days do not count as incapacitating and they must clarify.
+    5. Contradiction check: If the text describes severe bed rest/antibiotics, but the dropdown for episodes is '0', FAIL.
     """
-    
-    def validate_step_3():
-        sc_trig = st.session_state.get("Sinusitis__c.Sinus_Q48__c", "--select--")
-        if sc_trig == "--select--":
-            return "Please answer if you are seeking service connection."
-            
-        if sc_trig == "Yes":
-            if not st.session_state.get("Sinusitis__c.Sinus_Q34__c"):
-                return "Please indicate at least one affected sinus/type of sinusitis."
-            if not st.session_state.get("Sinusitis__c.Sinus_Q12__c"):
-                return "Please select at least one symptom."
-            if not st.session_state.get("Sinusitis__c.Sinus_Q14__c", "").strip():
-                return "Please describe your symptoms in detail."
-            if st.session_state.get("Sinusitis__c.Sinus_Q15__c", "--select--") == "--select--":
-                return "Please select the number of non-incapacitating episodes."
-            if st.session_state.get("Sinusitis__c.Sinus_Q16__c", "--select--") == "--select--":
-                return "Please select the number of incapacitating episodes."
-        return None
+    render_navigation("Symptoms", rules)
 
-    render_navigation("Symptoms", rules, python_validation=validate_step_3)
 # ==========================================
 # STEP 4: SURGERIES
 # ==========================================
@@ -595,103 +540,44 @@ elif st.session_state.step == 4:
     **Guidance for this section:**
     If you have undergone any surgical procedures for your sinuses, document them here.
     * **Date:** An approximate Month and Year is sufficient if you do not remember the exact day.
-    * **Findings:** Briefly explain what the surgeon did or discovered.
+    * **Findings:** Briefly explain what the surgeon did or discovered (e.g., "Removed nasal polyps and widened the sinus passages"). This shows the severity of the intervention required.
     """)
     
-    surg_trigger = st.radio("Have you ever had sinus surgery?", ["--select--", "Yes", "No"], index=0, key="Sinusitis__c.Sinus_Q17__c")
-    
-    # Mapa kluczy TYLKO dla detali operacji (Date, Type, Findings)
-    surg_keys = [
-        ("Sinusitis__c.Sinus_Q17aaa__c", "Sinusitis__c.Sinus_Q17aaa1__c", "Sinusitis__c.Sinus_Q17aab__c"),
-        ("Sinusitis__c.Sinus_Q17aba__c", "Sinusitis__c.Sinus_Q17aba1__c", "Sinusitis__c.Sinus_Q17abb__c"),
-        ("Sinusitis__c.Sinus_Q17abc__c", "Sinusitis__c.Sinus_Q17abc1__c", "Sinusitis__c.Sinus_Q17aca__c"),
-        ("Sinusitis__c.Sinus_Q17acb__c", "Sinusitis__c.Sinus_Q17acb1__c", "Sinusitis__c.Sinus_Q17acc__c")
-    ]
-    
+    surg_trigger = st.radio("Have you ever had sinus surgery?", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q17__c")
     if surg_trigger == "Yes":
-        num_surg = st.selectbox("How many sinus surgeries?", ["--select--", "1", "2", "3", "4", "More than 4"], key="Sinusitis__c.Sinus_Q17a__c")
+        num_surg = st.selectbox("How many sinus surgeries?", ["1", "2", "3", "4", "More than 4"], key="Sinusitis__c.Sinus_Q17a__c")
+        c1, c2 = st.columns(2)
+        with c1: st.text_input("Date (MM/YYYY)", key="Sinusitis__c.Sinus_Q17aaa__c")
+        with c2: st.selectbox("Type", ["Radical", "Endoscopic"], key="Sinusitis__c.Sinus_Q17aaa1__c")
         
-        if num_surg != "--select--":
-            count = 4 if num_surg == "More than 4" else int(num_surg)
-            
-            # Pętla generująca TYLKO operacje
-            for i in range(count):
-                date_key, type_key, findings_key = surg_keys[i]
-                
-                st.markdown(f"### Surgery #{i+1}")
-                c1, c2 = st.columns(2)
-                with c1: st.text_input("Date (MM/YYYY)", key=date_key, help="Must be exactly MM/YYYY (e.g., 05/2015)")
-                with c2: st.selectbox("Type", ["--select--", "Radical", "Endoscopic"], key=type_key)
-                
-                st.markdown("Findings / Description:")
-                st.text_area(f"Findings Area #{i+1}", key=findings_key, label_visibility="collapsed", height=68)
-                st.divider()
-                
-            if num_surg == "More than 4":
-                st.markdown("### Additional Surgeries")
-                st.markdown("**Type of Sinus Surgery:**")
-                st.markdown("If you have had more than four sinus surgeries please provide the following for each: Type of surgery and surgery date (month/year):")
-                st.text_area("Additional Surgeries Area", key="Sinusitis__c.Sinus_Q17d__c", label_visibility="collapsed", height=100)
-                st.divider()
-            
-            # GLOBALNE PYTANIA NA SAMYM DOLE SEKCJI OPERACJI
-            st.markdown("### General Surgery Details")
-            col_a, col_b = st.columns(2)
-            with col_a: 
-                st.selectbox("If known, what sinus was operated on?", ["--select--", "Maxillary", "Frontal", "Ethmoid", "Sphenoid", "Unknown"], key="Sinusitis__c.Sinus_Q17b__c")
-            with col_b: 
-                st.selectbox("Which side of your sinuses were operated on?", ["--select--", "Right", "Left", "Both"], key="Sinusitis__c.Sinus_Q17c__c")
+        st.markdown("**Findings:**")
+        st.text_area(
+            "Findings Area", 
+            key="Sinusitis__c.Sinus_Q17aab__c",
+            label_visibility="collapsed"
+        )
 
     rules = """
-    Focus strictly on Surgeries and perform a deep logical audit.
-    1. HISTORY CHECK: If the Veteran explicitly mentioned sinus surgery or polyp removal in their 'Brief history' (Step 1), but selected "No" here, FAIL.
-    2. CONTRADICTION CHECK (TYPE vs FINDINGS): Cross-reference the selected 'Type' (Radical or Endoscopic) with the text in 'Findings / Description' for EACH surgery. If the dropdown is 'Radical' but the text says 'endoscopic' (or vice versa), output FAIL and point out the exact contradiction.
-    3. GLOBAL DROPDOWN CONSISTENCY: Look at the global answers for "Which sinus was operated on?" and "Which side...". If the individual 'Findings' texts mention specific sinuses or sides (e.g., "maxillary", "right side") that CONTRADICT the global dropdown selections, output FAIL.
-    4. ADDITIONAL SURGERIES DETAILS: If 'More than 4' surgeries were selected, the 'Additional Surgeries (>4) Details' text MUST explicitly list both the 'Type' (e.g., endoscopic/radical) AND 'Date' (month/year) for the extra surgeries. If it only contains vague text without dates and types, FAIL.
-    5. GIBBERISH: If ANY text field contains gibberish ('asd', 'qwe'), FAIL.
+    Focus strictly on Surgeries. 
+    1. Cross-reference the 'Brief history' (and any other text). If the Veteran explicitly mentioned having a sinus surgery, operation, or polyps removed in their history, but they selected "No" for 'Ever had sinus surgery?' in this step, FAIL and tell them they must select "Yes" because they mentioned it in their history.
+    2. If they selected 'Yes' for surgery, they MUST provide the Date, Type, and write a coherent description in 'Findings'. If 'Findings' is empty or gibberish, FAIL.
     """
     
     def validate_step_4():
-        surg_trig = st.session_state.get("Sinusitis__c.Sinus_Q17__c", "--select--")
-        if surg_trig == "--select--":
-            return "Please answer if you have ever had sinus surgery."
-            
-        if surg_trig == "Yes":
-            num_surg = st.session_state.get("Sinusitis__c.Sinus_Q17a__c", "--select--")
-            if num_surg == "--select--":
-                return "Please select how many sinus surgeries you have had."
+        if st.session_state.get("Sinusitis__c.Sinus_Q17__c") == "Yes":
+            date_str = st.session_state.get("Sinusitis__c.Sinus_Q17aaa__c", "").strip()
+            if not date_str:
+                return "Surgery Date is required."
+            # TWARDE WYMUSZENIE FORMATU MM/YYYY
+            if not re.match(r"^(0[1-9]|1[0-2])\/\d{4}$", date_str):
+                return "Surgery Date MUST be strictly in MM/YYYY format (e.g., 05/2015)."
                 
-            count = 4 if num_surg == "More than 4" else int(num_surg)
-            
-            for i in range(count):
-                date_key, type_key, findings_key = surg_keys[i]
-                
-                date_str = st.session_state.get(date_key, "").strip()
-                if not date_str:
-                    return f"Surgery #{i+1} Date is required."
-                if not re.match(r"^(0[1-9]|1[0-2])\/\d{4}$", date_str):
-                    return f"Surgery #{i+1} Date MUST be strictly in MM/YYYY format (e.g., 05/2015)."
-                    
-                s_type = st.session_state.get(type_key, "--select--")
-                if s_type == "--select--":
-                    return f"Surgery #{i+1} Type is required. Please select Radical or Endoscopic."
-                    
-                if not st.session_state.get(findings_key, "").strip():
-                    return f"Surgery #{i+1} Findings description cannot be empty."
-                    
-            if num_surg == "More than 4":
-                if not st.session_state.get("Sinusitis__c.Sinus_Q17d__c", "").strip():
-                    return "You selected 'More than 4' surgeries. Please provide details in the Additional Surgeries text area."
-            
-            # NOWE: Twarda walidacja globalnych dropdownów na dole
-            if st.session_state.get("Sinusitis__c.Sinus_Q17b__c", "--select--") == "--select--":
-                return "Please select which sinus was operated on (or select 'Unknown')."
-            if st.session_state.get("Sinusitis__c.Sinus_Q17c__c", "--select--") == "--select--":
-                return "Please select which side of your sinuses were operated on."
-                
+            if not st.session_state.get("Sinusitis__c.Sinus_Q17aab__c", "").strip():
+                return "Surgery findings description cannot be empty."
         return None
 
     render_navigation("Surgeries", rules, python_validation=validate_step_4)
+
 # ==========================================
 # STEP 5: FINAL DETAILS & SUBMIT
 # ==========================================
