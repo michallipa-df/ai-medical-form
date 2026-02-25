@@ -131,11 +131,12 @@ ALL_KEYS_ORDERED = [
     "Sinusitis__c.Sinus_Q11acc__c", "Sinusitis__c.Sinus_Q11b__c", "Sinusitis__c.Sinus_Q48__c",
     "Sinusitis__c.Sinus_Q34__c", "Sinusitis__c.Sinus_Q12__c", "Sinusitis__c.Sinus_Q13__c",
     "Sinusitis__c.Sinus_Q14__c", "Sinusitis__c.Sinus_Q15__c", "Sinusitis__c.Sinus_Q16__c",
-    "Sinusitis__c.Sinus_Q17__c", "Sinusitis__c.Sinus_Q17a__c", "Sinusitis__c.Sinus_Q17aaa__c",
-    "Sinusitis__c.Sinus_Q17aaa1__c", "Sinusitis__c.Sinus_Q17aab__c", "Sinusitis__c.Sinus_Q17aba__c",
-    "Sinusitis__c.Sinus_Q17aba1__c", "Sinusitis__c.Sinus_Q17abb__c", "Sinusitis__c.Sinus_Q17abc__c",
-    "Sinusitis__c.Sinus_Q17abc1__c", "Sinusitis__c.Sinus_Q17aca__c", "Sinusitis__c.Sinus_Q17acb__c",
-    "Sinusitis__c.Sinus_Q17acb1__c", "Sinusitis__c.Sinus_Q17acc__c", "Sinusitis__c.Sinus_Q17b__c",
+    "Sinusitis__c.Sinus_Q17__c", "Sinusitis__c.Sinus_Q17a__c", 
+    "Sinusitis__c.Sinus_Q17aaa__c", "Sinusitis__c.Sinus_Q17aaa1__c", "Sinusitis__c.Sinus_Q17_sinus_1__c", "Sinusitis__c.Sinus_Q17_side_1__c", "Sinusitis__c.Sinus_Q17aab__c", 
+    "Sinusitis__c.Sinus_Q17aba__c", "Sinusitis__c.Sinus_Q17aba1__c", "Sinusitis__c.Sinus_Q17_sinus_2__c", "Sinusitis__c.Sinus_Q17_side_2__c", "Sinusitis__c.Sinus_Q17abb__c", 
+    "Sinusitis__c.Sinus_Q17abc__c", "Sinusitis__c.Sinus_Q17abc1__c", "Sinusitis__c.Sinus_Q17_sinus_3__c", "Sinusitis__c.Sinus_Q17_side_3__c", "Sinusitis__c.Sinus_Q17aca__c", 
+    "Sinusitis__c.Sinus_Q17acb__c", "Sinusitis__c.Sinus_Q17acb1__c", "Sinusitis__c.Sinus_Q17_sinus_4__c", "Sinusitis__c.Sinus_Q17_side_4__c", "Sinusitis__c.Sinus_Q17acc__c", 
+    "Sinusitis__c.Sinus_Q17b__c",
     "Sinusitis__c.Sinus_Q17c__c", "Sinusitis__c.Sinus_Q17d__c", "Sinusitis__c.Sinus_Q20__c",
     "Sinusitis__c.Sinus_Q20a__c", "Sinusitis__c.Sinus_Q20b__c", "Sinusitis__c.Sinus_Q20c__c",
     "Sinusitis__c.Sinus_Q20d__c", "Sinusitis__c.Sinus_Q35__c", "Sinusitis__c.Sinus_Q35a__c",
@@ -170,9 +171,29 @@ QUESTION_MAP = {
     "Sinus_Q16__c": "Incapacitating episodes (12mo)",
     "Sinus_Q17__c": "Ever had sinus surgery?",
     "Sinus_Q17a__c": "How many sinus surgeries?",
+    "Sinus_Q17aaa__c": "Surgery #1 Date",
+    "Sinus_Q17aaa1__c": "Surgery #1 Type",
+    "Sinus_Q17_sinus_1__c": "Surgery #1 Sinus operated on",
+    "Sinus_Q17_side_1__c": "Surgery #1 Side operated on",
+    "Sinus_Q17aab__c": "Surgery #1 Findings",
+    "Sinus_Q17aba__c": "Surgery #2 Date",
+    "Sinus_Q17aba1__c": "Surgery #2 Type",
+    "Sinus_Q17_sinus_2__c": "Surgery #2 Sinus operated on",
+    "Sinus_Q17_side_2__c": "Surgery #2 Side operated on",
+    "Sinus_Q17abb__c": "Surgery #2 Findings",
+    "Sinus_Q17abc__c": "Surgery #3 Date",
+    "Sinus_Q17abc1__c": "Surgery #3 Type",
+    "Sinus_Q17_sinus_3__c": "Surgery #3 Sinus operated on",
+    "Sinus_Q17_side_3__c": "Surgery #3 Side operated on",
+    "Sinus_Q17aca__c": "Surgery #3 Findings",
+    "Sinus_Q17acb__c": "Surgery #4 Date",
+    "Sinus_Q17acb1__c": "Surgery #4 Type",
+    "Sinus_Q17_sinus_4__c": "Surgery #4 Sinus operated on",
+    "Sinus_Q17_side_4__c": "Surgery #4 Side operated on",
+    "Sinus_Q17acc__c": "Surgery #4 Findings",
+    "Sinus_Q17d__c": "Additional Surgeries (>4) Details",
     "Sinus_Q21__c": "Occupational Impact"
 }
-
 # --- APP CONFIG ---
 st.set_page_config(page_title="Sinusitis DBQ Validation", layout="centered")
 
@@ -558,44 +579,87 @@ elif st.session_state.step == 4:
     **Guidance for this section:**
     If you have undergone any surgical procedures for your sinuses, document them here.
     * **Date:** An approximate Month and Year is sufficient if you do not remember the exact day.
-    * **Findings:** Briefly explain what the surgeon did or discovered (e.g., "Removed nasal polyps and widened the sinus passages"). This shows the severity of the intervention required.
+    * **Findings:** Briefly explain what the surgeon did or discovered.
     """)
     
-    surg_trigger = st.radio("Have you ever had sinus surgery?", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q17__c")
+    surg_trigger = st.radio("Have you ever had sinus surgery? *", ["--select--", "Yes", "No"], index=0, key="Sinusitis__c.Sinus_Q17__c")
+    
+    # Mapa kluczy dla maksymalnie 4 operacji
+    surg_keys = [
+        ("Sinusitis__c.Sinus_Q17aaa__c", "Sinusitis__c.Sinus_Q17aaa1__c", "Sinusitis__c.Sinus_Q17_sinus_1__c", "Sinusitis__c.Sinus_Q17_side_1__c", "Sinusitis__c.Sinus_Q17aab__c"),
+        ("Sinusitis__c.Sinus_Q17aba__c", "Sinusitis__c.Sinus_Q17aba1__c", "Sinusitis__c.Sinus_Q17_sinus_2__c", "Sinusitis__c.Sinus_Q17_side_2__c", "Sinusitis__c.Sinus_Q17abb__c"),
+        ("Sinusitis__c.Sinus_Q17abc__c", "Sinusitis__c.Sinus_Q17abc1__c", "Sinusitis__c.Sinus_Q17_sinus_3__c", "Sinusitis__c.Sinus_Q17_side_3__c", "Sinusitis__c.Sinus_Q17aca__c"),
+        ("Sinusitis__c.Sinus_Q17acb__c", "Sinusitis__c.Sinus_Q17acb1__c", "Sinusitis__c.Sinus_Q17_sinus_4__c", "Sinusitis__c.Sinus_Q17_side_4__c", "Sinusitis__c.Sinus_Q17acc__c")
+    ]
+    
     if surg_trigger == "Yes":
-        num_surg = st.selectbox("How many sinus surgeries?", ["1", "2", "3", "4", "More than 4"], key="Sinusitis__c.Sinus_Q17a__c")
-        c1, c2 = st.columns(2)
-        with c1: st.text_input("Date (MM/YYYY)", key="Sinusitis__c.Sinus_Q17aaa__c")
-        with c2: st.selectbox("Type", ["Radical", "Endoscopic"], key="Sinusitis__c.Sinus_Q17aaa1__c")
+        num_surg = st.selectbox("How many sinus surgeries? *", ["--select--", "1", "2", "3", "4", "More than 4"], key="Sinusitis__c.Sinus_Q17a__c")
         
-        st.markdown("**Findings:**")
-        st.text_area(
-            "Findings Area", 
-            key="Sinusitis__c.Sinus_Q17aab__c",
-            label_visibility="collapsed"
-        )
+        if num_surg != "--select--":
+            count = 4 if num_surg == "More than 4" else int(num_surg)
+            
+            for i in range(count):
+                date_key, type_key, sinus_key, side_key, findings_key = surg_keys[i]
+                
+                st.markdown(f"### Surgery #{i+1}")
+                c1, c2 = st.columns(2)
+                with c1: st.text_input("Date (MM/YYYY) *", key=date_key, help="Must be exactly MM/YYYY (e.g., 05/2015)")
+                with c2: st.selectbox("Type *", ["--select--", "Radical", "Endoscopic"], key=type_key)
+                
+                c3, c4 = st.columns(2)
+                with c3: st.selectbox("If known, what sinus was operated on?", ["--select--", "Maxillary", "Frontal", "Ethmoid", "Sphenoid", "Unknown"], key=sinus_key)
+                with c4: st.selectbox("Which side of your sinuses were operated on?", ["--select--", "Right", "Left", "Both"], key=side_key)
+                
+                st.markdown("**Findings / Description: ***")
+                st.text_area(f"Findings Area #{i+1}", key=findings_key, label_visibility="collapsed", height=68)
+                st.divider()
+                
+            if num_surg == "More than 4":
+                st.markdown("### Additional Surgeries")
+                st.markdown("**Type of Sinus Surgery:** *")
+                st.markdown("If you have had more than four sinus surgeries please provide the following for each: Type of surgery and surgery date (month/year):")
+                st.text_area("Additional Surgeries Area", key="Sinusitis__c.Sinus_Q17d__c", label_visibility="collapsed", height=100)
 
     rules = """
     Focus strictly on Surgeries. 
     1. Cross-reference the 'Brief history' (and any other text). If the Veteran explicitly mentioned having a sinus surgery, operation, or polyps removed in their history, but they selected "No" for 'Ever had sinus surgery?' in this step, FAIL and tell them they must select "Yes" because they mentioned it in their history.
-    2. If they selected 'Yes' for surgery, they MUST provide the Date, Type, and write a coherent description in 'Findings'. If 'Findings' is empty or gibberish, FAIL.
+    2. If they selected 'Yes' for surgery, check the 'Findings / Description' text for EACH listed surgery. The descriptions must be coherent. If ANY surgery findings are gibberish (e.g., 'asd', 'qwe'), output FAIL.
     """
     
     def validate_step_4():
-        if st.session_state.get("Sinusitis__c.Sinus_Q17__c") == "Yes":
-            date_str = st.session_state.get("Sinusitis__c.Sinus_Q17aaa__c", "").strip()
-            if not date_str:
-                return "Surgery Date is required."
-            # TWARDE WYMUSZENIE FORMATU MM/YYYY
-            if not re.match(r"^(0[1-9]|1[0-2])\/\d{4}$", date_str):
-                return "Surgery Date MUST be strictly in MM/YYYY format (e.g., 05/2015)."
+        surg_trig = st.session_state.get("Sinusitis__c.Sinus_Q17__c", "--select--")
+        if surg_trig == "--select--":
+            return "Please answer if you have ever had sinus surgery."
+            
+        if surg_trig == "Yes":
+            num_surg = st.session_state.get("Sinusitis__c.Sinus_Q17a__c", "--select--")
+            if num_surg == "--select--":
+                return "Please select how many sinus surgeries you have had."
                 
-            if not st.session_state.get("Sinusitis__c.Sinus_Q17aab__c", "").strip():
-                return "Surgery findings description cannot be empty."
+            count = 4 if num_surg == "More than 4" else int(num_surg)
+            
+            for i in range(count):
+                date_key, type_key, sinus_key, side_key, findings_key = surg_keys[i]
+                
+                date_str = st.session_state.get(date_key, "").strip()
+                if not date_str:
+                    return f"Surgery #{i+1} Date is required."
+                if not re.match(r"^(0[1-9]|1[0-2])\/\d{4}$", date_str):
+                    return f"Surgery #{i+1} Date MUST be strictly in MM/YYYY format (e.g., 05/2015)."
+                    
+                s_type = st.session_state.get(type_key, "--select--")
+                if s_type == "--select--":
+                    return f"Surgery #{i+1} Type is required. Please select Radical or Endoscopic."
+                    
+                if not st.session_state.get(findings_key, "").strip():
+                    return f"Surgery #{i+1} Findings description cannot be empty."
+                    
+            if num_surg == "More than 4":
+                if not st.session_state.get("Sinusitis__c.Sinus_Q17d__c", "").strip():
+                    return "You selected 'More than 4' surgeries. Please provide details in the Additional Surgeries text area."
         return None
 
     render_navigation("Surgeries", rules, python_validation=validate_step_4)
-
 # ==========================================
 # STEP 5: FINAL DETAILS & SUBMIT
 # ==========================================
