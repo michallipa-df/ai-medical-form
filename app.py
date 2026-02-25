@@ -195,6 +195,10 @@ if 'force_restore' not in st.session_state:
     st.session_state.force_restore = False
 if 'step_validation_passed' not in st.session_state:
     st.session_state.step_validation_passed = False
+if 'step_validation_passed' not in st.session_state:
+    st.session_state.step_validation_passed = False
+if 'validated_step_data' not in st.session_state:
+    st.session_state.validated_step_data = None
 
 # POTĘŻNY FIX: Wymuszone przywracanie stanu z sejfu (form_data) przy zmianie strony lub po załadowaniu draftu
 if st.session_state.force_restore:
@@ -260,6 +264,7 @@ with st.sidebar:
         st.rerun()
 
 # --- HELPER FUNCTIONS ---
+# --- HELPER FUNCTIONS ---
 def get_readable_step_data(global_fetch=False):
     readable_data = {}
     for key in ALL_KEYS_ORDERED:
@@ -273,16 +278,18 @@ def get_readable_step_data(global_fetch=False):
 def proceed_to_next():
     save_step_data()
     st.session_state.current_warning = None
-    st.session_state.step_validation_passed = False # <--- Reset flagi
+    st.session_state.step_validation_passed = False
+    st.session_state.validated_step_data = None # Reset zdjęcia
     st.session_state.step += 1
-    st.session_state.force_restore = True
+    st.session_state.force_restore = True 
 
 def prev_step():
     save_step_data()
     st.session_state.current_warning = None
-    st.session_state.step_validation_passed = False # <--- Reset flagi
+    st.session_state.step_validation_passed = False
+    st.session_state.validated_step_data = None # Reset zdjęcia
     st.session_state.step -= 1
-    st.session_state.force_restore = True
+    st.session_state.force_restore = True 
 
 def attempt_validation(step_name, rules):
     save_step_data()
@@ -292,15 +299,29 @@ def attempt_validation(step_name, rules):
         
     if ai_response == "PASS":
         st.session_state.current_warning = None
-        st.session_state.step_validation_passed = True # <--- Włączenie zielonego światła
+        st.session_state.step_validation_passed = True
+        st.session_state.validated_step_data = step_data # <--- ROBIMY ZDJĘCIE POPRAWNYCH DANYCH
         st.rerun()
     else:
         st.session_state.current_warning = ai_response
         st.session_state.step_validation_passed = False
+        st.session_state.validated_step_data = None
         st.rerun()
 
 def render_navigation(step_name, rules, python_validation=None):
     st.divider()
+    
+    # --- MECHANIZM ODBIERANIA PRZEPUSTKI ---
+    if st.session_state.get('step_validation_passed'):
+        save_step_data() # Zaciągamy to, co weteran ma teraz na ekranie
+        current_data = get_readable_step_data()
+        # Jeśli obecne dane różnią się od zwalidowanego "zdjęcia", zabieramy przycisk
+        if current_data != st.session_state.get('validated_step_data'):
+            st.session_state.step_validation_passed = False
+            st.session_state.validated_step_data = None
+            st.session_state.current_warning = None # Czyścimy stare błędy, by zacząć na czysto
+    # ---------------------------------------
+
     col1, col2 = st.columns([1, 4])
     
     with col1:
@@ -322,7 +343,6 @@ def render_navigation(step_name, rules, python_validation=None):
                     attempt_validation(step_name, rules)
             with btn_col2:
                 if st.button("Continue Anyway", type="secondary", use_container_width=True):
-                    # Twardy bloker działa NAWET, gdy weteran próbuje wymusić przejście
                     if python_validation:
                         err = python_validation()
                         if err:
@@ -331,15 +351,13 @@ def render_navigation(step_name, rules, python_validation=None):
                     proceed_to_next()
                     st.rerun()
         else:
-            # ROZDZIELENIE WALIDACJI OD PRZEJŚCIA DALEJ
             if st.session_state.step_validation_passed:
-                st.success("✅ Validation passed! Everything looks good.")
+                st.success("✅ AI Validation passed! Everything looks good.")
                 if st.button("Proceed to Next Step", type="primary", use_container_width=True):
                     proceed_to_next()
                     st.rerun()
             else:
                 if st.button("Validate Step", type="primary", use_container_width=True):
-                    # Twardy bloker przed pierwszym sprawdzeniem AI
                     if python_validation:
                         err = python_validation()
                         if err:
