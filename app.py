@@ -528,7 +528,7 @@ elif st.session_state.step == 3:
     * **Incapacitating episodes:** The VA defines this very strictly. It means requiring **bed rest prescribed by a physician AND treatment with antibiotics for 4 to 6 weeks**. If you just stayed home from work but did not require prolonged antibiotics, do not overstate this count.
     """)
     
-    sc_trigger = st.radio("Are you service connected or seeking service connection for Sinusitis? *", ["--select--", "Yes", "No"], index=0, key="Sinusitis__c.Sinus_Q48__c")
+    sc_trigger = st.radio("Are you service connected or seeking service connection for Sinusitis? *", ["Yes", "No"], index=0, key="Sinusitis__c.Sinus_Q48__c")
     
     if sc_trigger == "Yes":
         st.multiselect(
