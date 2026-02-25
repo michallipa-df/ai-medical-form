@@ -163,11 +163,11 @@ QUESTION_MAP = {
     "Sinus_Q11a__c": "How many medications?",
     "Sinus_Q11aaa__c": "Medication #1 Name", "Sinus_Q11aba__c": "Medication #2 Name", "Sinus_Q11aca__c": "Medication #3 Name",
     "Sinus_Q48__c": "Seeking service connection?",
-    "Sinus_Q34__c": "Sinuses affected",
+    "Sinus_Q34__c": "Indicate the sinus/type of sinusitis affected",
+    "Sinus_Q15__c": "Number of non-incapacitating episodes (last 12 months)",
+    "Sinus_Q16__c": "Number of incapacitating episodes (last 12 months)",
     "Sinus_Q12__c": "Symptoms checklist",
     "Sinus_Q14__c": "Detailed symptom description",
-    "Sinus_Q15__c": "Non-incapacitating episodes (12mo)",
-    "Sinus_Q16__c": "Incapacitating episodes (12mo)",
     "Sinus_Q17__c": "Ever had sinus surgery?",
     "Sinus_Q17a__c": "How many sinus surgeries?",
     "Sinus_Q17aaa__c": "Surgery #1 Date", "Sinus_Q17aaa1__c": "Surgery #1 Type", "Sinus_Q17aab__c": "Surgery #1 Findings",
@@ -522,19 +522,28 @@ elif st.session_state.step == 3:
     st.info("""
     **Guidance for this section:**
     This section directly impacts your rating. 
-    * **Symptoms Checklist:** Only select symptoms you currently experience.
-    * **Detailed Description:** You must write a paragraph explaining *every single symptom* you checked above. Describe how the pain feels, how often the discharge occurs, etc.
-    * **Incapacitating Episodes:** The VA defines "incapacitating" very strictly. It means requiring **bed rest prescribed by a physician AND treatment with antibiotics for 4 to 6 weeks**. If you just stayed home from work but did not require prolonged antibiotics, do not overstate this count.
+    * **Symptoms & Affected Sinuses:** Select all that apply.
+    * **Detailed Description:** You must write a paragraph explaining *every single symptom* and *affected sinus* you checked. Describe how the pain feels, how often the discharge occurs, etc.
+    * **Non-incapacitating episodes:** Typical flare-ups (headaches, pain, discharge) that DO NOT require prolonged antibiotics or bed rest.
+    * **Incapacitating episodes:** The VA defines this very strictly. It means requiring **bed rest prescribed by a physician AND treatment with antibiotics for 4 to 6 weeks**. If you just stayed home from work but did not require prolonged antibiotics, do not overstate this count.
     """)
     
-    sc_trigger = st.radio("Are you service connected or seeking service connection for Sinusitis?", ["Yes", "No"], index=1, key="Sinusitis__c.Sinus_Q48__c")
+    sc_trigger = st.radio("Are you service connected or seeking service connection for Sinusitis? *", ["--select--", "Yes", "No"], index=0, key="Sinusitis__c.Sinus_Q48__c")
+    
     if sc_trigger == "Yes":
         st.multiselect(
-            "Select all sinus symptoms that apply:", 
-            ["Crusting","Discharge containing pus","Headaches caused by sinusitis","Near Constant Sinusitis","Sinus pain"], 
+            "Indicate the sinus/type of sinusitis currently affected by the chronic sinusitis: *",
+            ["Maxillary", "Frontal", "Ethmoid", "Sphenoid", "Pansinusitis", "Unknown"],
+            key="Sinusitis__c.Sinus_Q34__c"
+        )
+        
+        st.multiselect(
+            "Select all sinus symptoms that apply: *", 
+            ["Crusting", "Discharge containing pus", "Headaches caused by sinusitis", "Near Constant Sinusitis", "Sinus pain"], 
             key="Sinusitis__c.Sinus_Q12__c"
         )
-        st.markdown("Please describe the symptoms you selected in detail:*")
+        
+        st.markdown("**Please describe the symptoms you selected in detail:** *")
         st.text_area(
             "Detailed Description Area", 
             key="Sinusitis__c.Sinus_Q14__c",
@@ -542,18 +551,40 @@ elif st.session_state.step == 3:
             height=150
         )
         
-        st.selectbox("Incapacitating episodes (last 12 months):", ["0", "1", "2", "3 or more"], key="Sinusitis__c.Sinus_Q16__c")
+        st.selectbox("Number of non-incapacitating episodes (headaches, pain, discharge, crusting) during the last 12 months: *", ["--select--", "0", "1", "2", "3", "4", "5", "6", "7 or more"], key="Sinusitis__c.Sinus_Q15__c")
+        st.selectbox("Number of incapacitating episodes (requiring 4-6 weeks of antibiotics) over the last 12 months: *", ["--select--", "0", "1", "2", "3 or more"], key="Sinusitis__c.Sinus_Q16__c")
 
     rules = """
     Focus strictly on Symptoms and Severity. IGNORE ANY MENTIONS OF SURGERY IN THIS STEP.
     1. Cross-reference the 'Brief history' from Step 1. If 'Brief history' describes ongoing symptoms, but they selected "No" for 'Seeking service connection' or didn't check any symptoms here, FAIL.
-    2. Every symptom checked in the 'Symptoms checklist' MUST be explicitly described in the 'Detailed symptom description'. If a checked symptom is missing from the text, FAIL.
+    2. SYMPTOMS & SINUS CROSS-CHECK: Every symptom and affected sinus checked in the multiselects MUST be explicitly supported or described in the 'Detailed symptom description'. If a checked symptom or specific sinus (e.g., "Maxillary") is completely ignored in the text, or if the text contradicts the selected sinuses, FAIL.
     3. VAGUE ANSWER DETECTION: If the description is too generic (e.g., "I get bad headaches", "It hurts", "They are severe") without specific context like frequency, duration, or triggers, FAIL. Demand more specific functional details.
-    4. STRICT 'INCAPACITATING' DEFINITION (CRITICAL): The VA strictly defines "incapacitating" as requiring bed rest PRESCRIBED BY A PHYSICIAN AND treatment with antibiotics for 4 to 6 weeks. If the user's text mentions "incapacitating episodes" or "staying home from work", but DOES NOT explicitly mention physician-prescribed bed rest and antibiotics, you MUST output FAIL. Tell them regular sick days do not count as incapacitating and they must clarify.
-    5. Contradiction check: If the text describes severe bed rest/antibiotics, but the dropdown for episodes is '0', FAIL.
+    4. EPISODES CROSS-CHECK: 
+       - If the user selects > 0 for 'Incapacitating episodes', the text MUST explicitly mention physician-prescribed bed rest AND treatment with antibiotics for 4-6 weeks. If missing, FAIL.
+       - If the user selects > 0 for 'Non-incapacitating episodes', the text MUST describe these regular flare-ups (headaches, discharge, etc.).
+       - If they select '0' for both but describe constant severe flare-ups, or if they select multiple episodes but write "I feel fine", FAIL due to contradiction.
+    5. GIBBERISH: If ANY text field contains gibberish ('asd', 'qwe'), FAIL.
     """
-    render_navigation("Symptoms", rules)
+    
+    def validate_step_3():
+        sc_trig = st.session_state.get("Sinusitis__c.Sinus_Q48__c", "--select--")
+        if sc_trig == "--select--":
+            return "Please answer if you are seeking service connection."
+            
+        if sc_trig == "Yes":
+            if not st.session_state.get("Sinusitis__c.Sinus_Q34__c"):
+                return "Please indicate at least one affected sinus/type of sinusitis."
+            if not st.session_state.get("Sinusitis__c.Sinus_Q12__c"):
+                return "Please select at least one symptom."
+            if not st.session_state.get("Sinusitis__c.Sinus_Q14__c", "").strip():
+                return "Please describe your symptoms in detail."
+            if st.session_state.get("Sinusitis__c.Sinus_Q15__c", "--select--") == "--select--":
+                return "Please select the number of non-incapacitating episodes."
+            if st.session_state.get("Sinusitis__c.Sinus_Q16__c", "--select--") == "--select--":
+                return "Please select the number of incapacitating episodes."
+        return None
 
+    render_navigation("Symptoms", rules, python_validation=validate_step_3)
 # ==========================================
 # STEP 4: SURGERIES
 # ==========================================
