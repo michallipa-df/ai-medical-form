@@ -599,8 +599,16 @@ elif st.session_state.step == 5:
     
     st.markdown("Regardless of your current employment status, how does your sinus condition affect your ability to work? *")
     st.text_area("Occupational Impact Area", key="Sinusitis__c.Sinus_Q21__c", label_visibility="collapsed", height=150)
-    st.text_input("Veteran Name:", key="Sinusitis__c.DBQ__c.Veteran_Name_Text__c")
-    st.text_input("Date Submitted (MM/DD/YYYY):", key="Sinusitis__c.Date_Submitted__c")
+    
+    # --- AUTO-WYPEŁNIANIE DATY ---
+    today_str = datetime.now().strftime("%m/%d/%Y")
+    # Jeśli pole daty jest puste (weteran wszedł tu pierwszy raz), wklejamy dzisiejszą datę
+    if not st.session_state.get("Sinusitis__c.Date_Submitted__c"):
+        st.session_state["Sinusitis__c.Date_Submitted__c"] = today_str
+        st.session_state.form_data["Sinusitis__c.Date_Submitted__c"] = today_str
+
+    st.text_input("Veteran Name: *", key="Sinusitis__c.DBQ__c.Veteran_Name_Text__c", help="Enter your full legal name (First and Last).")
+    st.text_input("Date Submitted (MM/DD/YYYY): *", key="Sinusitis__c.Date_Submitted__c", help="This is automatically set to today's date.")
     
     st.divider()
     
