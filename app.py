@@ -332,7 +332,7 @@ def render_navigation(step_name, rules, python_validation=None):
         else:
             # ROZDZIELENIE WALIDACJI OD PRZEJŚCIA DALEJ
             if st.session_state.step_validation_passed:
-                st.success("✅ AI Validation passed! Everything looks good.")
+                st.success("✅ Validation passed! Everything looks good.")
                 if st.button("Proceed to Next Step", type="primary", use_container_width=True):
                     proceed_to_next()
                     st.rerun()
@@ -521,7 +521,7 @@ elif st.session_state.step == 3:
             height=150
         )
         
-        st.selectbox("Incapacitating episodes (last 12 months): *", ["0", "1", "2", "3 or more"], key="Sinusitis__c.Sinus_Q16__c")
+        st.selectbox("Incapacitating episodes (last 12 months):", ["0", "1", "2", "3 or more"], key="Sinusitis__c.Sinus_Q16__c")
 
     rules = """
     Focus strictly on Symptoms and Severity. IGNORE ANY MENTIONS OF SURGERY IN THIS STEP.
@@ -664,7 +664,7 @@ elif st.session_state.step == 5:
                             st.session_state.final_validation_passed = False
                             st.rerun()
                 with btn_col2:
-                    if st.button("Submit to AWS Anyway", type="secondary", use_container_width=True):
+                    if st.button("Submit Anyway", type="secondary", use_container_width=True):
                         err = validate_step_5()
                         if err:
                             st.error(f"🛑 Cannot bypass: {err}")
@@ -675,7 +675,7 @@ elif st.session_state.step == 5:
                 # TUTAJ ZASZŁA ZMIANA: Podział na Validate i Submit
                 if st.session_state.final_validation_passed:
                     st.success("✅ AI Audit passed! No logical contradictions found. Your form is ready.")
-                    if st.button("Submit to AWS", type="primary", use_container_width=True):
+                    if st.button("Submit", type="primary", use_container_width=True):
                         st.session_state.aws_upload_triggered = True
                         st.rerun()
                 else:
@@ -716,7 +716,7 @@ elif st.session_state.step == 5:
         save_step_data()
         json_string = generate_tailored_json()
         
-        with st.status("Uploading to AWS...", expanded=True) as status:
+        with st.status("Uploading...", expanded=True) as status:
             filename = f"DBQ_Sinus_{json.loads(json_string)['caseID']}.json"
             success = upload_to_source(json_string, filename)
             
@@ -727,7 +727,7 @@ elif st.session_state.step == 5:
                 if result_data:
                     status.update(label="Processing Complete!", state="complete", expanded=False)
                     st.divider()
-                    st.subheader("🎉 AWS Processing Result")
+                    st.subheader("🎉 Processing Result")
                     # Wynik z AWS zostawiamy w czytelnym bloku kodu na całą szerokość
                     formatted_result = json.dumps(result_data, indent=4)
                     st.code(formatted_result, language="json")
