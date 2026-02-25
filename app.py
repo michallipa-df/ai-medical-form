@@ -567,7 +567,7 @@ elif st.session_state.step == 4:
     * **Findings:** Briefly explain what the surgeon did or discovered.
     """)
     
-    surg_trigger = st.radio("Have you ever had sinus surgery? *", ["--select--", "Yes", "No"], index=0, key="Sinusitis__c.Sinus_Q17__c")
+    surg_trigger = st.radio("Have you ever had sinus surgery?", ["--select--", "Yes", "No"], index=0, key="Sinusitis__c.Sinus_Q17__c")
     
     # Mapa kluczy TYLKO dla detali operacji (Date, Type, Findings)
     surg_keys = [
@@ -578,7 +578,7 @@ elif st.session_state.step == 4:
     ]
     
     if surg_trigger == "Yes":
-        num_surg = st.selectbox("How many sinus surgeries? *", ["--select--", "1", "2", "3", "4", "More than 4"], key="Sinusitis__c.Sinus_Q17a__c")
+        num_surg = st.selectbox("How many sinus surgeries?", ["--select--", "1", "2", "3", "4", "More than 4"], key="Sinusitis__c.Sinus_Q17a__c")
         
         if num_surg != "--select--":
             count = 4 if num_surg == "More than 4" else int(num_surg)
@@ -589,16 +589,16 @@ elif st.session_state.step == 4:
                 
                 st.markdown(f"### Surgery #{i+1}")
                 c1, c2 = st.columns(2)
-                with c1: st.text_input("Date (MM/YYYY) *", key=date_key, help="Must be exactly MM/YYYY (e.g., 05/2015)")
-                with c2: st.selectbox("Type *", ["--select--", "Radical", "Endoscopic"], key=type_key)
+                with c1: st.text_input("Date (MM/YYYY)", key=date_key, help="Must be exactly MM/YYYY (e.g., 05/2015)")
+                with c2: st.selectbox("Type", ["--select--", "Radical", "Endoscopic"], key=type_key)
                 
-                st.markdown("**Findings / Description: ***")
+                st.markdown("Findings / Description:")
                 st.text_area(f"Findings Area #{i+1}", key=findings_key, label_visibility="collapsed", height=68)
                 st.divider()
                 
             if num_surg == "More than 4":
                 st.markdown("### Additional Surgeries")
-                st.markdown("**Type of Sinus Surgery:** *")
+                st.markdown("**Type of Sinus Surgery:**")
                 st.markdown("If you have had more than four sinus surgeries please provide the following for each: Type of surgery and surgery date (month/year):")
                 st.text_area("Additional Surgeries Area", key="Sinusitis__c.Sinus_Q17d__c", label_visibility="collapsed", height=100)
                 st.divider()
