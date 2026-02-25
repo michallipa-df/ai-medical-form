@@ -264,7 +264,6 @@ with st.sidebar:
         st.rerun()
 
 # --- HELPER FUNCTIONS ---
-# --- HELPER FUNCTIONS ---
 def get_readable_step_data(global_fetch=False):
     readable_data = {}
     for key in ALL_KEYS_ORDERED:
@@ -325,7 +324,8 @@ def render_navigation(step_name, rules, python_validation=None):
     col1, col2 = st.columns([1, 4])
     
     with col1:
-        st.button("Back", on_click=prev_step, use_container_width=True)
+        if st.session_state.step > 1:
+            st.button("Back", on_click=prev_step, use_container_width=True)
             
     with col2:
         if st.session_state.current_warning:
