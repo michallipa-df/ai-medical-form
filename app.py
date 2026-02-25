@@ -132,13 +132,12 @@ ALL_KEYS_ORDERED = [
     "Sinusitis__c.Sinus_Q34__c", "Sinusitis__c.Sinus_Q12__c", "Sinusitis__c.Sinus_Q13__c",
     "Sinusitis__c.Sinus_Q14__c", "Sinusitis__c.Sinus_Q15__c", "Sinusitis__c.Sinus_Q16__c",
     "Sinusitis__c.Sinus_Q17__c", "Sinusitis__c.Sinus_Q17a__c", 
-    "Sinusitis__c.Sinus_Q17aaa__c", "Sinusitis__c.Sinus_Q17aaa1__c", "Sinusitis__c.Sinus_Q17_sinus_1__c", "Sinusitis__c.Sinus_Q17_side_1__c", "Sinusitis__c.Sinus_Q17aab__c", 
-    "Sinusitis__c.Sinus_Q17aba__c", "Sinusitis__c.Sinus_Q17aba1__c", "Sinusitis__c.Sinus_Q17_sinus_2__c", "Sinusitis__c.Sinus_Q17_side_2__c", "Sinusitis__c.Sinus_Q17abb__c", 
-    "Sinusitis__c.Sinus_Q17abc__c", "Sinusitis__c.Sinus_Q17abc1__c", "Sinusitis__c.Sinus_Q17_sinus_3__c", "Sinusitis__c.Sinus_Q17_side_3__c", "Sinusitis__c.Sinus_Q17aca__c", 
-    "Sinusitis__c.Sinus_Q17acb__c", "Sinusitis__c.Sinus_Q17acb1__c", "Sinusitis__c.Sinus_Q17_sinus_4__c", "Sinusitis__c.Sinus_Q17_side_4__c", "Sinusitis__c.Sinus_Q17acc__c", 
-    "Sinusitis__c.Sinus_Q17b__c",
-    "Sinusitis__c.Sinus_Q17c__c", "Sinusitis__c.Sinus_Q17d__c", "Sinusitis__c.Sinus_Q20__c",
-    "Sinusitis__c.Sinus_Q20a__c", "Sinusitis__c.Sinus_Q20b__c", "Sinusitis__c.Sinus_Q20c__c",
+    "Sinusitis__c.Sinus_Q17aaa__c", "Sinusitis__c.Sinus_Q17aaa1__c", "Sinusitis__c.Sinus_Q17aab__c", 
+    "Sinusitis__c.Sinus_Q17aba__c", "Sinusitis__c.Sinus_Q17aba1__c", "Sinusitis__c.Sinus_Q17abb__c", 
+    "Sinusitis__c.Sinus_Q17abc__c", "Sinusitis__c.Sinus_Q17abc1__c", "Sinusitis__c.Sinus_Q17aca__c", 
+    "Sinusitis__c.Sinus_Q17acb__c", "Sinusitis__c.Sinus_Q17acb1__c", "Sinusitis__c.Sinus_Q17acc__c", 
+    "Sinusitis__c.Sinus_Q17b__c", "Sinusitis__c.Sinus_Q17c__c", "Sinusitis__c.Sinus_Q17d__c", 
+    "Sinusitis__c.Sinus_Q20__c", "Sinusitis__c.Sinus_Q20a__c", "Sinusitis__c.Sinus_Q20b__c", "Sinusitis__c.Sinus_Q20c__c",
     "Sinusitis__c.Sinus_Q20d__c", "Sinusitis__c.Sinus_Q35__c", "Sinusitis__c.Sinus_Q35a__c",
     "Sinusitis__c.Sinus_Q35b__c", "Sinusitis__c.Sinus_Q35c__c", "Sinusitis__c.Sinus_Q36__c",
     "Sinusitis__c.Sinus_Q36a__c", "Sinusitis__c.Sinus_Q36b__c", "Sinusitis__c.Sinus_Q36c__c",
@@ -171,26 +170,12 @@ QUESTION_MAP = {
     "Sinus_Q16__c": "Incapacitating episodes (12mo)",
     "Sinus_Q17__c": "Ever had sinus surgery?",
     "Sinus_Q17a__c": "How many sinus surgeries?",
-    "Sinus_Q17aaa__c": "Surgery #1 Date",
-    "Sinus_Q17aaa1__c": "Surgery #1 Type",
-    "Sinus_Q17_sinus_1__c": "Surgery #1 Sinus operated on",
-    "Sinus_Q17_side_1__c": "Surgery #1 Side operated on",
-    "Sinus_Q17aab__c": "Surgery #1 Findings",
-    "Sinus_Q17aba__c": "Surgery #2 Date",
-    "Sinus_Q17aba1__c": "Surgery #2 Type",
-    "Sinus_Q17_sinus_2__c": "Surgery #2 Sinus operated on",
-    "Sinus_Q17_side_2__c": "Surgery #2 Side operated on",
-    "Sinus_Q17abb__c": "Surgery #2 Findings",
-    "Sinus_Q17abc__c": "Surgery #3 Date",
-    "Sinus_Q17abc1__c": "Surgery #3 Type",
-    "Sinus_Q17_sinus_3__c": "Surgery #3 Sinus operated on",
-    "Sinus_Q17_side_3__c": "Surgery #3 Side operated on",
-    "Sinus_Q17aca__c": "Surgery #3 Findings",
-    "Sinus_Q17acb__c": "Surgery #4 Date",
-    "Sinus_Q17acb1__c": "Surgery #4 Type",
-    "Sinus_Q17_sinus_4__c": "Surgery #4 Sinus operated on",
-    "Sinus_Q17_side_4__c": "Surgery #4 Side operated on",
-    "Sinus_Q17acc__c": "Surgery #4 Findings",
+    "Sinus_Q17aaa__c": "Surgery #1 Date", "Sinus_Q17aaa1__c": "Surgery #1 Type", "Sinus_Q17aab__c": "Surgery #1 Findings",
+    "Sinus_Q17aba__c": "Surgery #2 Date", "Sinus_Q17aba1__c": "Surgery #2 Type", "Sinus_Q17abb__c": "Surgery #2 Findings",
+    "Sinus_Q17abc__c": "Surgery #3 Date", "Sinus_Q17abc1__c": "Surgery #3 Type", "Sinus_Q17aca__c": "Surgery #3 Findings",
+    "Sinus_Q17acb__c": "Surgery #4 Date", "Sinus_Q17acb1__c": "Surgery #4 Type", "Sinus_Q17acc__c": "Surgery #4 Findings",
+    "Sinus_Q17b__c": "Which sinus was operated on?",
+    "Sinus_Q17c__c": "Which side of your sinuses were operated on?",
     "Sinus_Q17d__c": "Additional Surgeries (>4) Details",
     "Sinus_Q21__c": "Occupational Impact"
 }
@@ -584,12 +569,12 @@ elif st.session_state.step == 4:
     
     surg_trigger = st.radio("Have you ever had sinus surgery? *", ["--select--", "Yes", "No"], index=0, key="Sinusitis__c.Sinus_Q17__c")
     
-    # Mapa kluczy dla maksymalnie 4 operacji
+    # Mapa kluczy TYLKO dla detali operacji (Date, Type, Findings)
     surg_keys = [
-        ("Sinusitis__c.Sinus_Q17aaa__c", "Sinusitis__c.Sinus_Q17aaa1__c", "Sinusitis__c.Sinus_Q17_sinus_1__c", "Sinusitis__c.Sinus_Q17_side_1__c", "Sinusitis__c.Sinus_Q17aab__c"),
-        ("Sinusitis__c.Sinus_Q17aba__c", "Sinusitis__c.Sinus_Q17aba1__c", "Sinusitis__c.Sinus_Q17_sinus_2__c", "Sinusitis__c.Sinus_Q17_side_2__c", "Sinusitis__c.Sinus_Q17abb__c"),
-        ("Sinusitis__c.Sinus_Q17abc__c", "Sinusitis__c.Sinus_Q17abc1__c", "Sinusitis__c.Sinus_Q17_sinus_3__c", "Sinusitis__c.Sinus_Q17_side_3__c", "Sinusitis__c.Sinus_Q17aca__c"),
-        ("Sinusitis__c.Sinus_Q17acb__c", "Sinusitis__c.Sinus_Q17acb1__c", "Sinusitis__c.Sinus_Q17_sinus_4__c", "Sinusitis__c.Sinus_Q17_side_4__c", "Sinusitis__c.Sinus_Q17acc__c")
+        ("Sinusitis__c.Sinus_Q17aaa__c", "Sinusitis__c.Sinus_Q17aaa1__c", "Sinusitis__c.Sinus_Q17aab__c"),
+        ("Sinusitis__c.Sinus_Q17aba__c", "Sinusitis__c.Sinus_Q17aba1__c", "Sinusitis__c.Sinus_Q17abb__c"),
+        ("Sinusitis__c.Sinus_Q17abc__c", "Sinusitis__c.Sinus_Q17abc1__c", "Sinusitis__c.Sinus_Q17aca__c"),
+        ("Sinusitis__c.Sinus_Q17acb__c", "Sinusitis__c.Sinus_Q17acb1__c", "Sinusitis__c.Sinus_Q17acc__c")
     ]
     
     if surg_trigger == "Yes":
@@ -598,17 +583,14 @@ elif st.session_state.step == 4:
         if num_surg != "--select--":
             count = 4 if num_surg == "More than 4" else int(num_surg)
             
+            # Pętla generująca TYLKO operacje
             for i in range(count):
-                date_key, type_key, sinus_key, side_key, findings_key = surg_keys[i]
+                date_key, type_key, findings_key = surg_keys[i]
                 
                 st.markdown(f"### Surgery #{i+1}")
                 c1, c2 = st.columns(2)
                 with c1: st.text_input("Date (MM/YYYY) *", key=date_key, help="Must be exactly MM/YYYY (e.g., 05/2015)")
                 with c2: st.selectbox("Type *", ["--select--", "Radical", "Endoscopic"], key=type_key)
-                
-                c3, c4 = st.columns(2)
-                with c3: st.selectbox("If known, what sinus was operated on?", ["--select--", "Maxillary", "Frontal", "Ethmoid", "Sphenoid", "Unknown"], key=sinus_key)
-                with c4: st.selectbox("Which side of your sinuses were operated on?", ["--select--", "Right", "Left", "Both"], key=side_key)
                 
                 st.markdown("**Findings / Description: ***")
                 st.text_area(f"Findings Area #{i+1}", key=findings_key, label_visibility="collapsed", height=68)
@@ -619,6 +601,15 @@ elif st.session_state.step == 4:
                 st.markdown("**Type of Sinus Surgery:** *")
                 st.markdown("If you have had more than four sinus surgeries please provide the following for each: Type of surgery and surgery date (month/year):")
                 st.text_area("Additional Surgeries Area", key="Sinusitis__c.Sinus_Q17d__c", label_visibility="collapsed", height=100)
+                st.divider()
+            
+            # GLOBALNE PYTANIA NA SAMYM DOLE SEKCJI OPERACJI
+            st.markdown("### General Surgery Details")
+            col_a, col_b = st.columns(2)
+            with col_a: 
+                st.selectbox("If known, what sinus was operated on?", ["--select--", "Maxillary", "Frontal", "Ethmoid", "Sphenoid", "Unknown"], key="Sinusitis__c.Sinus_Q17b__c")
+            with col_b: 
+                st.selectbox("Which side of your sinuses were operated on?", ["--select--", "Right", "Left", "Both"], key="Sinusitis__c.Sinus_Q17c__c")
 
     rules = """
     Focus strictly on Surgeries. 
@@ -639,7 +630,7 @@ elif st.session_state.step == 4:
             count = 4 if num_surg == "More than 4" else int(num_surg)
             
             for i in range(count):
-                date_key, type_key, sinus_key, side_key, findings_key = surg_keys[i]
+                date_key, type_key, findings_key = surg_keys[i]
                 
                 date_str = st.session_state.get(date_key, "").strip()
                 if not date_str:
