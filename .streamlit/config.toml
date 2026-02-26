@@ -1,15 +1,5 @@
 [theme]
-# Główny kolor akcentów (np. przyciski, checkboxy) - np. czerwony z logo
 primaryColor = "#d62828" 
-
-# Kolor tła głównej części aplikacji (zostawiamy czystą biel)
 backgroundColor = "#ffffff" 
-
-# KOLOR BOCZNEGO PANELU (Sidebar) - Twój granat
 secondaryBackgroundColor = "#003048" 
-
-# Kolor tekstu w głównej części formularza
-textColor = "#0f2b4c" 
-
-# Czcionka
 font = "sans serif"
