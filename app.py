@@ -264,7 +264,7 @@ with st.sidebar:
         else:
             st.warning("No saved progress found on this browser.")
             
-    if st.button("Start New Form", type="secondary", use_container_width=True):
+    if st.button("Clear Current Answers", type="secondary", use_container_width=True):
         localS.deleteAll()
         st.session_state.clear()
         st.rerun()
