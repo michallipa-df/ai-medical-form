@@ -28,11 +28,15 @@ class GroqMedicalScribe:
         VETERAN'S INPUT: {json.dumps(step_data)}
         RULES: {rules}
         
+        CRITICAL TONE & FORMAT INSTRUCTIONS FOR THE HINT:
+        1. Speak directly to the user in the second person (use "You" / "Your"). NEVER refer to them in the third person (DO NOT use "The Veteran", "The user", "They", "He/She").
+        2. BE SPECIFIC ABOUT FIELDS: If you find a contradiction or missing information across different fields, EXPLICITLY NAME the exact fields or sections where the conflict exists (e.g., "In your 'History', you wrote X, but in the 'Sinuses affected' dropdown, you selected Y.").
+        
         You must output ONLY a valid JSON object.
         Format exactly like this:
         {{
           "status": "PASS" or "FAIL",
-          "hint": "If FAIL, write your 1-2 sentence hint here explaining what needs correction. If PASS, leave empty."
+          "hint": "If FAIL, write your 1-2 sentence hint here explaining what needs correction following the tone instructions above. If PASS, leave empty."
         }}
         """
         
