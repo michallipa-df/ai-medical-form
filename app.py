@@ -158,7 +158,7 @@ ALL_KEYS_ORDERED = [
 
 QUESTION_MAP = {
     "Sinusitis_1a__c": "Initial claim or re-evaluation?",
-    "Sinus_Q10c__c": "Brief history of sinus condition",
+    "Sinus_Q10c__c": "Describe the history (including onset and course) of your sinus, nose, throat, larynx, or pharynx condition",
     "Sinus_Q11__c": "Do you currently take any medication?",
     "Sinus_Q11a__c": "How many medications?",
     "Sinus_Q11aaa__c": "Medication #1 Name", "Sinus_Q11aba__c": "Medication #2 Name", "Sinus_Q11aca__c": "Medication #3 Name",
@@ -429,7 +429,7 @@ if st.session_state.step == 1:
     )
 
     if claim_selection != "--select an item--":
-        st.markdown("Briefly describe the history of your sinus condition:")
+        st.markdown("**Describe the history (including onset and course) of your sinus, nose, throat, larynx, or pharynx condition:** *")
         st.text_area(
             "History Area", 
             key="Sinusitis__c.Sinus_Q10c__c", 
@@ -439,11 +439,11 @@ if st.session_state.step == 1:
 
     rules = """
     1. The user MUST select either "Initial Claim" or "Re-evaluation for Existing". If not selected, FAIL.
-    2. If "Initial Claim" is selected, the 'Brief history' text MUST explicitly contain ALL THREE of these elements:
+    2. If "Initial Claim" is selected, the 'History' text MUST explicitly contain ALL THREE of these elements:
        - HOW the symptoms began (origin/progression).
        - WHEN the symptoms began (a date, year, or deployment period).
        - The LINK to military service (e.g., burn pits, a specific base, active duty).
-    3. If "Re-evaluation for Existing" is selected, the 'Brief history' text MUST explicitly contain ALL TWO of these elements:
+    3. If "Re-evaluation for Existing" is selected, the 'History' text MUST explicitly contain ALL TWO of these elements:
        - HOW the symptoms began.
        - WHEN the symptoms began.
     If ANY of the required elements based on their claim type are missing, FAIL and list exactly which elements are missing.
