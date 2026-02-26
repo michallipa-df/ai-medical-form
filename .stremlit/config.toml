@@ -1,0 +1,15 @@
+[theme]
+# Główny kolor akcentów (np. zaznaczone checkboxy, suwaki, główne przyciski) - REE Medical Red
+primaryColor = "#d62828" 
+
+# Kolor tła aplikacji (czysta biel dla czytelności formularzy medycznych)
+backgroundColor = "#ffffff" 
+
+# Kolor tła dla paska bocznego (Sidebar) i wyróżnionych bloków (np. st.info) - Jasny, chłodny szary/błękitny
+secondaryBackgroundColor = "#f0f4f8" 
+
+# Główny kolor tekstu - Głęboki, elegancki granat (REE Medical Navy Blue) zamiast ostrej czerni
+textColor = "#0f2b4c" 
+
+# Font pasujący do czystych, korporacyjnych stron (sans serif)
+font = "sans serif"
