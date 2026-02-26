@@ -554,7 +554,7 @@ elif st.session_state.step == 2:
 # STEP 3: SYMPTOMS & RATING SCHEDULE
 # ==========================================
 elif st.session_state.step == 3:
-    st.title("Symptoms and Severity")
+    st.title("Symptoms and Severity of Sinusitis")
     
     st.info("""
     **Guidance for this section:**
@@ -592,7 +592,7 @@ elif st.session_state.step == 3:
         st.selectbox("Number of incapacitating episodes (requiring 4-6 weeks of antibiotics) over the last 12 months:", ["--select--", "0", "1", "2", "3 or more"], key="Sinusitis__c.Sinus_Q16__c")
 
     rules = """
-    Focus strictly on Symptoms and Severity. IGNORE ANY MENTIONS OF SURGERY IN THIS STEP.
+    Focus strictly on Symptoms and Severity of Sinusitis. IGNORE ANY MENTIONS OF SURGERY IN THIS STEP.
     1. Cross-reference the 'Brief history' from Step 1. If 'Brief history' describes ongoing symptoms, but they selected "No" for 'Seeking service connection' or didn't check any symptoms here, FAIL.
     2. SYMPTOMS & SINUS CROSS-CHECK: Every symptom and affected sinus checked in the multiselects MUST be explicitly supported or described in the 'Detailed symptom description'. If a checked symptom or specific sinus (e.g., "Maxillary") is completely ignored in the text, or if the text contradicts the selected sinuses, FAIL.
     3. VAGUE ANSWER DETECTION: If the description is too generic (e.g., "I get bad headaches", "It hurts", "They are severe") without specific context like frequency, duration, or triggers, FAIL. Demand more specific functional details.
@@ -621,7 +621,7 @@ elif st.session_state.step == 3:
                 return "Please select the number of incapacitating episodes."
         return None
 
-    render_navigation("Symptoms", rules, python_validation=validate_step_3)
+    render_navigation("Symptoms and Severity of Sinusitis", rules, python_validation=validate_step_3)
 # ==========================================
 # STEP 4: SURGERIES
 # ==========================================
