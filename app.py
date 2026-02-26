@@ -182,6 +182,24 @@ QUESTION_MAP = {
 # --- APP CONFIG ---
 st.set_page_config(page_title="Sinusitis DBQ Validation", layout="centered")
 
+# --- CUSTOM CSS ---
+st.markdown("""
+    <style>
+        /* Wymuszenie żółtego tła dla WSZYSTKICH przycisków */
+        div.stButton > button {
+            background-color: #fbc049 !important;
+            color: #003048 !important; /* Granatowy tekst na przycisku */
+            border: 1px solid #fbc049 !important;
+            font-weight: bold !important; /* Pogrubienie tekstu dla lepszego kontrastu */
+        }
+        /* Efekt najechania myszką (leciutko ciemniejszy żółty) */
+        div.stButton > button:hover {
+            background-color: #e6ab3b !important; 
+            color: #003048 !important;
+            border: 1px solid #e6ab3b !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
 # Initialize local storage
 localS = LocalStorage()
 # Initialize LLM
