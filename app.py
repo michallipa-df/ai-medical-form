@@ -182,14 +182,22 @@ QUESTION_MAP = {
 # --- APP CONFIG ---
 st.set_page_config(page_title="Sinusitis DBQ Validation", layout="centered")
 
+# --- CUSTOM CSS DLA FIRMOWYCH KOLORÓW I CZCIONKI REE MEDICAL ---
 st.markdown("""
     <style>
-        /* Wymuszenie czcionki Avenir TYLKO na elementach tekstowych i formularzach (chroni ikonki Streamlita przed zepsuciem) */
-        p, h1, h2, h3, h4, h5, h6, label, input, textarea, select, li {
+        /* Wymuszenie Avenir na głównych elementach tekstowych */
+        .stApp, p, h1, h2, h3, h4, h5, h6, label, input, textarea, select, li {
             font-family: 'Avenir', 'Avenir Next', sans-serif !important;
         }
+        
+        /* TWARDA OCHRONA IKON STREAMLITA (Naprawia 'keyboard_double') */
+        span.material-symbols-rounded, 
+        .material-symbols-rounded, 
+        i.material-icons {
+            font-family: 'Material Symbols Rounded', 'Material Icons' !important;
+        }
 
-        /* Wymuszenie żółtego tła dla dużych przycisków akcji (Save, Validate, Submit) */
+        /* Żółte przyciski REE Medical z granatowym tekstem */
         div.stButton > button {
             background-color: #fbc049 !important;
             color: #003048 !important; /* Granatowy tekst na przycisku */
