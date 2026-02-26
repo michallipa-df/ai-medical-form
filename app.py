@@ -395,7 +395,7 @@ def render_navigation(step_name, rules, python_validation=None):
                     st.rerun()
         else:
             if st.session_state.step_validation_passed:
-                st.success("✅ AI Validation passed! Everything looks good.")
+                st.success("✅ Validation passed! Everything looks good.")
                 if st.button("Proceed to Next Step", type="primary", use_container_width=True):
                     proceed_to_next()
                     st.rerun()
@@ -565,22 +565,22 @@ elif st.session_state.step == 3:
     * **Incapacitating episodes:** The VA defines this very strictly. It means requiring **bed rest prescribed by a physician AND treatment with antibiotics for 4 to 6 weeks**. If you just stayed home from work but did not require prolonged antibiotics, do not overstate this count.
     """)
     
-    sc_trigger = st.radio("Are you service connected or seeking service connection for Sinusitis? *", ["Yes", "No"], index=0, key="Sinusitis__c.Sinus_Q48__c")
+    sc_trigger = st.radio("Are you service connected or seeking service connection for Sinusitis?", ["Yes", "No"], index=0, key="Sinusitis__c.Sinus_Q48__c")
     
     if sc_trigger == "Yes":
         st.multiselect(
-            "Indicate the sinus/type of sinusitis currently affected by the chronic sinusitis: *",
+            "Indicate the sinus/type of sinusitis currently affected by the chronic sinusitis:",
             ["Maxillary", "Frontal", "Ethmoid", "Sphenoid", "Pansinusitis", "Unknown"],
             key="Sinusitis__c.Sinus_Q34__c"
         )
         
         st.multiselect(
-            "Select all sinus symptoms that apply: *", 
+            "Select all sinus symptoms that apply:", 
             ["Crusting", "Discharge containing pus", "Headaches caused by sinusitis", "Near Constant Sinusitis", "Sinus pain"], 
             key="Sinusitis__c.Sinus_Q12__c"
         )
         
-        st.markdown("**Please describe the symptoms you selected in detail:** *")
+        st.markdown("**Please describe the symptoms you selected in detail:**")
         st.text_area(
             "Detailed Description Area", 
             key="Sinusitis__c.Sinus_Q14__c",
@@ -588,8 +588,8 @@ elif st.session_state.step == 3:
             height=150
         )
         
-        st.selectbox("Number of non-incapacitating episodes (headaches, pain, discharge, crusting) during the last 12 months: *", ["--select--", "0", "1", "2", "3", "4", "5", "6", "7 or more"], key="Sinusitis__c.Sinus_Q15__c")
-        st.selectbox("Number of incapacitating episodes (requiring 4-6 weeks of antibiotics) over the last 12 months: *", ["--select--", "0", "1", "2", "3 or more"], key="Sinusitis__c.Sinus_Q16__c")
+        st.selectbox("Number of non-incapacitating episodes (headaches, pain, discharge, crusting) during the last 12 months:", ["--select--", "0", "1", "2", "3", "4", "5", "6", "7 or more"], key="Sinusitis__c.Sinus_Q15__c")
+        st.selectbox("Number of incapacitating episodes (requiring 4-6 weeks of antibiotics) over the last 12 months:", ["--select--", "0", "1", "2", "3 or more"], key="Sinusitis__c.Sinus_Q16__c")
 
     rules = """
     Focus strictly on Symptoms and Severity. IGNORE ANY MENTIONS OF SURGERY IN THIS STEP.
@@ -635,7 +635,7 @@ elif st.session_state.step == 4:
     * **Findings:** Briefly explain what the surgeon did or discovered.
     """)
     
-    surg_trigger = st.radio("Have you ever had sinus surgery?", ["--select--", "Yes", "No"], index=0, key="Sinusitis__c.Sinus_Q17__c")
+    surg_trigger = st.radio("Have you ever had sinus surgery?", [ "Yes", "No"], index=0, key="Sinusitis__c.Sinus_Q17__c")
     
     # Mapa kluczy TYLKO dla detali operacji (Date, Type, Findings)
     surg_keys = [
@@ -754,8 +754,8 @@ elif st.session_state.step == 5:
         st.session_state["Sinusitis__c.Date_Submitted__c"] = today_str
         st.session_state.form_data["Sinusitis__c.Date_Submitted__c"] = today_str
 
-    st.text_input("Veteran Name: *", key="Sinusitis__c.DBQ__c.Veteran_Name_Text__c", help="Enter your full legal name (First and Last).")
-    st.text_input("Date Submitted (MM/DD/YYYY): *", key="Sinusitis__c.Date_Submitted__c", help="This is automatically set to today's date.")
+    st.text_input("Veteran Name:", key="Sinusitis__c.DBQ__c.Veteran_Name_Text__c", help="Enter your full legal name (First and Last).")
+    st.text_input("Date Submitted (MM/DD/YYYY):", key="Sinusitis__c.Date_Submitted__c", help="This is automatically set to today's date.")
     
     st.divider()
     
