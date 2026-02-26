@@ -1,5 +1,9 @@
 [theme]
+base = "light"
 primaryColor = "#d62828" 
 backgroundColor = "#ffffff" 
-secondaryBackgroundColor = "#003048" 
+# Bardzo jasny, medyczny błękit dla paska bocznego i pól tekstowych
+secondaryBackgroundColor = "#f4f6f9" 
+# Twój firmowy granat dla wszystkich tekstów
+textColor = "#003048" 
 font = "sans serif"
