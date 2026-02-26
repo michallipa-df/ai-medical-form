@@ -216,6 +216,25 @@ st.markdown("""
             color: #003048 !important;
             border: 1px solid #e6ab3b !important;
         }
+        /* --- STYLIZACJA KÓŁECZEK RADIO (żeby nie były puste w środku) --- */
+        
+        /* Wygląd niezaznaczonego kółeczka (wypełnienie kolorem zamiast bieli) */
+        div[data-baseweb="radio"] > div:first-child {
+            background-color: #e8eef4 !important; /* Bardzo jasny, chłodny błękit w środku */
+            border: 2px solid #003048 !important; /* Granatowa, mocna obwódka */
+        }
+        
+        /* Wygląd zaznaczonego kółeczka (nasz żółty kolor główny) */
+        div[data-baseweb="radio"] input:checked + div,
+        div[data-baseweb="radio"][aria-checked="true"] > div:first-child {
+            background-color: #fbc049 !important; /* Wypełnienie na żółto po kliknięciu */
+            border: 2px solid #003048 !important; /* Granatowa obwódka pozostaje */
+        }
+        
+        /* Mała kropka wewnątrz po zaznaczeniu (wymuszamy jej granatowy kolor) */
+        div[data-baseweb="radio"] div > div {
+            background-color: #003048 !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 # Initialize local storage
