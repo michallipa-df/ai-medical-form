@@ -576,7 +576,7 @@ elif st.session_state.step == 3:
         
         st.multiselect(
             "Select all sinus symptoms that apply:", 
-            ["Crusting", "Discharge containing pus", "Headaches caused by sinusitis", "Near Constant Sinusitis", "Sinus pain"], 
+            ["Crusting", "Discharge containing pus", "Headaches caused by sinusitis", "Near Constant Sinusitis", "Sinus pain", "Sinus tenderness"], 
             key="Sinusitis__c.Sinus_Q12__c"
         )
         
