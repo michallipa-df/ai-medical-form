@@ -223,12 +223,17 @@ def save_step_data():
     for key in ALL_KEYS_ORDERED:
         if key in st.session_state:
             st.session_state.form_data[key] = st.session_state[key]
-# ========================================== 
+# ==========================================
 # 💾 SIDEBAR:(LOCAL STORAGE)
 # ==========================================
 with st.sidebar:
+    # --- LOGO FIRMOWE ---
+    st.image("https://reemedical.com/wp-content/uploads/2025/05/REE-Medical-Header-Logo.png", use_container_width=True)
+    st.divider() # Delikatna linia oddzielająca logo od reszty
+    
     st.header("💾 Save & Resume")
     st.info("Save your progress to this browser and return later.")
+
     
     if st.button("Save Progress", use_container_width=True, type="primary"):
         save_step_data()
