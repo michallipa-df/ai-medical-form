@@ -182,21 +182,22 @@ QUESTION_MAP = {
 # --- APP CONFIG ---
 st.set_page_config(page_title="Sinusitis DBQ Validation", layout="centered")
 
-# --- CUSTOM CSS DLA FIRMOWYCH KOLORÓW I CZCIONKI REE MEDICAL ---
 st.markdown("""
     <style>
-        /* Wymuszenie czcionki Avenir na absolutnie wszystkim (z fallbackiem na inne bezszeryfowe w razie braku Avenir na PC) */
-        html, body, [class*="css"], [class*="st-"], p, h1, h2, h3, h4, h5, h6, span, div, label, input, textarea, select, button {
+        /* Wymuszenie czcionki Avenir TYLKO na elementach tekstowych i formularzach (chroni ikonki Streamlita przed zepsuciem) */
+        p, h1, h2, h3, h4, h5, h6, label, input, textarea, select, li {
             font-family: 'Avenir', 'Avenir Next', sans-serif !important;
         }
 
-        /* Wymuszenie żółtego tła dla WSZYSTKICH przycisków */
+        /* Wymuszenie żółtego tła dla dużych przycisków akcji (Save, Validate, Submit) */
         div.stButton > button {
             background-color: #fbc049 !important;
             color: #003048 !important; /* Granatowy tekst na przycisku */
             border: 1px solid #fbc049 !important;
             font-weight: bold !important; /* Pogrubienie tekstu dla lepszego kontrastu */
+            font-family: 'Avenir', 'Avenir Next', sans-serif !important;
         }
+        
         /* Efekt najechania myszką (leciutko ciemniejszy żółty) */
         div.stButton > button:hover {
             background-color: #e6ab3b !important; 
