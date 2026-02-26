@@ -294,7 +294,7 @@ with st.sidebar:
                 st.session_state.force_restore = True # <--- Dodana wymuszona odnowa
                 
                 st.success("✅ Draft loaded successfully!")
-                time.sleep(1)
+                time.sleep(3)
                 st.rerun()
             except Exception as e:
                 st.error("Failed to load draft. Data might be corrupted.")
