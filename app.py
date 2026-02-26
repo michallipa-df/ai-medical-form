@@ -182,9 +182,14 @@ QUESTION_MAP = {
 # --- APP CONFIG ---
 st.set_page_config(page_title="Sinusitis DBQ Validation", layout="centered")
 
-# --- CUSTOM CSS ---
+# --- CUSTOM CSS DLA FIRMOWYCH KOLORÓW I CZCIONKI REE MEDICAL ---
 st.markdown("""
     <style>
+        /* Wymuszenie czcionki Avenir na absolutnie wszystkim (z fallbackiem na inne bezszeryfowe w razie braku Avenir na PC) */
+        html, body, [class*="css"], [class*="st-"], p, h1, h2, h3, h4, h5, h6, span, div, label, input, textarea, select, button {
+            font-family: 'Avenir', 'Avenir Next', sans-serif !important;
+        }
+
         /* Wymuszenie żółtego tła dla WSZYSTKICH przycisków */
         div.stButton > button {
             background-color: #fbc049 !important;
