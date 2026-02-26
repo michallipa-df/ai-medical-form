@@ -429,7 +429,7 @@ if st.session_state.step == 1:
     )
 
     if claim_selection != "--select an item--":
-        st.markdown("**Describe the history (including onset and course) of your sinus, nose, throat, larynx, or pharynx condition:** *")
+        st.markdown("Describe the history (including onset and course) of your sinus, nose, throat, larynx, or pharynx condition:")
         st.text_area(
             "History Area", 
             key="Sinusitis__c.Sinus_Q10c__c", 
