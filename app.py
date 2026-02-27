@@ -28,11 +28,15 @@ class GroqMedicalScribe:
         VETERAN'S INPUT: {json.dumps(step_data)}
         RULES: {rules}
         
+        CRITICAL TONE & FORMAT INSTRUCTIONS FOR THE HINT:
+        1. Speak directly to the user in the second person (use "You" / "Your"). NEVER refer to them in the third person (DO NOT use "The Veteran", "The user", "They", "He/She").
+        2. BE SPECIFIC ABOUT FIELDS: If you find a contradiction or missing information across different fields, EXPLICITLY NAME the exact fields or sections where the conflict exists (e.g., "In your 'History', you wrote X, but in the 'Sinuses affected' dropdown, you selected Y.").
+        
         You must output ONLY a valid JSON object.
         Format exactly like this:
         {{
           "status": "PASS" or "FAIL",
-          "hint": "If FAIL, write your 1-2 sentence hint here explaining what needs correction. If PASS, leave empty."
+          "hint": "If FAIL, write your 1-2 sentence hint here explaining what needs correction following the tone instructions above. If PASS, leave empty."
         }}
         """
         
@@ -158,7 +162,7 @@ ALL_KEYS_ORDERED = [
 
 QUESTION_MAP = {
     "Sinusitis_1a__c": "Initial claim or re-evaluation?",
-    "Sinus_Q10c__c": "Brief history of sinus condition",
+    "Sinus_Q10c__c": "Describe the history (including onset and course) of your sinus, nose, throat, larynx, or pharynx condition",
     "Sinus_Q11__c": "Do you currently take any medication?",
     "Sinus_Q11a__c": "How many medications?",
     "Sinus_Q11aaa__c": "Medication #1 Name", "Sinus_Q11aba__c": "Medication #2 Name", "Sinus_Q11aca__c": "Medication #3 Name",
@@ -182,6 +186,57 @@ QUESTION_MAP = {
 # --- APP CONFIG ---
 st.set_page_config(page_title="Sinusitis DBQ Validation", layout="centered")
 
+# --- CUSTOM CSS DLA FIRMOWYCH KOLORÓW I CZCIONKI REE MEDICAL ---
+st.markdown("""
+    <style>
+        /* Wymuszenie Avenir na głównych elementach tekstowych */
+        .stApp, p, h1, h2, h3, h4, h5, h6, label, input, textarea, select, li {
+            font-family: 'Avenir', 'Avenir Next', sans-serif !important;
+        }
+        
+        /* TWARDA OCHRONA IKON STREAMLITA (Naprawia 'keyboard_double') */
+        span.material-symbols-rounded, 
+        .material-symbols-rounded, 
+        i.material-icons {
+            font-family: 'Material Symbols Rounded', 'Material Icons' !important;
+        }
+
+        /* Żółte przyciski REE Medical z granatowym tekstem */
+        div.stButton > button {
+            background-color: #fbc049 !important;
+            color: #003048 !important; /* Granatowy tekst na przycisku */
+            border: 1px solid #fbc049 !important;
+            font-weight: bold !important; /* Pogrubienie tekstu dla lepszego kontrastu */
+            font-family: 'Avenir', 'Avenir Next', sans-serif !important;
+        }
+        
+        /* Efekt najechania myszką (leciutko ciemniejszy żółty) */
+        div.stButton > button:hover {
+            background-color: #e6ab3b !important; 
+            color: #003048 !important;
+            border: 1px solid #e6ab3b !important;
+        }
+        /* --- STYLIZACJA KÓŁECZEK RADIO (żeby nie były puste w środku) --- */
+        
+        /* Wygląd niezaznaczonego kółeczka (wypełnienie kolorem zamiast bieli) */
+        div[data-baseweb="radio"] > div:first-child {
+            background-color: #e8eef4 !important; /* Bardzo jasny, chłodny błękit w środku */
+            border: 2px solid #003048 !important; /* Granatowa, mocna obwódka */
+        }
+        
+        /* Wygląd zaznaczonego kółeczka (nasz żółty kolor główny) */
+        div[data-baseweb="radio"] input:checked + div,
+        div[data-baseweb="radio"][aria-checked="true"] > div:first-child {
+            background-color: #fbc049 !important; /* Wypełnienie na żółto po kliknięciu */
+            border: 2px solid #003048 !important; /* Granatowa obwódka pozostaje */
+        }
+        
+        /* Mała kropka wewnątrz po zaznaczeniu (wymuszamy jej granatowy kolor) */
+        div[data-baseweb="radio"] div > div {
+            background-color: #003048 !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
 # Initialize local storage
 localS = LocalStorage()
 # Initialize LLM
@@ -223,12 +278,17 @@ def save_step_data():
     for key in ALL_KEYS_ORDERED:
         if key in st.session_state:
             st.session_state.form_data[key] = st.session_state[key]
-# ========================================== 
+# ==========================================
 # 💾 SIDEBAR:(LOCAL STORAGE)
 # ==========================================
 with st.sidebar:
+    # --- LOGO FIRMOWE ---
+    st.image("https://reemedical.com/wp-content/uploads/2025/05/REE-Medical-Header-Logo.png", use_container_width=True)
+    st.divider() # Delikatna linia oddzielająca logo od reszty
+    
     st.header("💾 Save & Resume")
     st.info("Save your progress to this browser and return later.")
+
     
     if st.button("Save Progress", use_container_width=True, type="primary"):
         save_step_data()
@@ -257,14 +317,14 @@ with st.sidebar:
                 st.session_state.force_restore = True # <--- Dodana wymuszona odnowa
                 
                 st.success("✅ Draft loaded successfully!")
-                time.sleep(1)
+                time.sleep(3)
                 st.rerun()
             except Exception as e:
                 st.error("Failed to load draft. Data might be corrupted.")
         else:
             st.warning("No saved progress found on this browser.")
             
-    if st.button("Start New Form", type="secondary", use_container_width=True):
+    if st.button("Clear Current Answers", type="secondary", use_container_width=True):
         localS.deleteAll()
         st.session_state.clear()
         st.rerun()
@@ -358,7 +418,7 @@ def render_navigation(step_name, rules, python_validation=None):
                     st.rerun()
         else:
             if st.session_state.step_validation_passed:
-                st.success("✅ AI Validation passed! Everything looks good.")
+                st.success("✅ Validation passed! Everything looks good.")
                 if st.button("Proceed to Next Step", type="primary", use_container_width=True):
                     proceed_to_next()
                     st.rerun()
@@ -392,7 +452,7 @@ if st.session_state.step == 1:
     )
 
     if claim_selection != "--select an item--":
-        st.markdown("Briefly describe the history of your sinus condition:")
+        st.markdown("Describe the history (including onset and course) of your sinus, nose, throat, larynx, or pharynx condition:")
         st.text_area(
             "History Area", 
             key="Sinusitis__c.Sinus_Q10c__c", 
@@ -402,11 +462,11 @@ if st.session_state.step == 1:
 
     rules = """
     1. The user MUST select either "Initial Claim" or "Re-evaluation for Existing". If not selected, FAIL.
-    2. If "Initial Claim" is selected, the 'Brief history' text MUST explicitly contain ALL THREE of these elements:
+    2. If "Initial Claim" is selected, the 'History' text MUST explicitly contain ALL THREE of these elements:
        - HOW the symptoms began (origin/progression).
        - WHEN the symptoms began (a date, year, or deployment period).
        - The LINK to military service (e.g., burn pits, a specific base, active duty).
-    3. If "Re-evaluation for Existing" is selected, the 'Brief history' text MUST explicitly contain ALL TWO of these elements:
+    3. If "Re-evaluation for Existing" is selected, the 'History' text MUST explicitly contain ALL TWO of these elements:
        - HOW the symptoms began.
        - WHEN the symptoms began.
     If ANY of the required elements based on their claim type are missing, FAIL and list exactly which elements are missing.
@@ -517,7 +577,7 @@ elif st.session_state.step == 2:
 # STEP 3: SYMPTOMS & RATING SCHEDULE
 # ==========================================
 elif st.session_state.step == 3:
-    st.title("Symptoms and Severity")
+    st.title("Symptoms and Severity of Sinusitis")
     
     st.info("""
     **Guidance for this section:**
@@ -528,22 +588,22 @@ elif st.session_state.step == 3:
     * **Incapacitating episodes:** The VA defines this very strictly. It means requiring **bed rest prescribed by a physician AND treatment with antibiotics for 4 to 6 weeks**. If you just stayed home from work but did not require prolonged antibiotics, do not overstate this count.
     """)
     
-    sc_trigger = st.radio("Are you service connected or seeking service connection for Sinusitis? *", ["Yes", "No"], index=0, key="Sinusitis__c.Sinus_Q48__c")
+    sc_trigger = st.radio("Are you service connected or seeking service connection for Sinusitis?", ["Yes", "No"], index=0, key="Sinusitis__c.Sinus_Q48__c")
     
     if sc_trigger == "Yes":
         st.multiselect(
-            "Indicate the sinus/type of sinusitis currently affected by the chronic sinusitis: *",
+            "Indicate the sinus/type of sinusitis currently affected by the chronic sinusitis:",
             ["Maxillary", "Frontal", "Ethmoid", "Sphenoid", "Pansinusitis", "Unknown"],
             key="Sinusitis__c.Sinus_Q34__c"
         )
         
         st.multiselect(
-            "Select all sinus symptoms that apply: *", 
-            ["Crusting", "Discharge containing pus", "Headaches caused by sinusitis", "Near Constant Sinusitis", "Sinus pain"], 
+            "Select all sinus symptoms that apply:", 
+            ["Crusting", "Discharge containing pus", "Headaches caused by sinusitis", "Near Constant Sinusitis", "Sinus pain", "Sinus tenderness"], 
             key="Sinusitis__c.Sinus_Q12__c"
         )
         
-        st.markdown("**Please describe the symptoms you selected in detail:** *")
+        st.markdown("**Please describe the symptoms you selected in detail:**")
         st.text_area(
             "Detailed Description Area", 
             key="Sinusitis__c.Sinus_Q14__c",
@@ -551,11 +611,11 @@ elif st.session_state.step == 3:
             height=150
         )
         
-        st.selectbox("Number of non-incapacitating episodes (headaches, pain, discharge, crusting) during the last 12 months: *", ["--select--", "0", "1", "2", "3", "4", "5", "6", "7 or more"], key="Sinusitis__c.Sinus_Q15__c")
-        st.selectbox("Number of incapacitating episodes (requiring 4-6 weeks of antibiotics) over the last 12 months: *", ["--select--", "0", "1", "2", "3 or more"], key="Sinusitis__c.Sinus_Q16__c")
+        st.selectbox("Number of non-incapacitating episodes (headaches, pain, discharge, crusting) during the last 12 months:", ["--select--", "0", "1", "2", "3", "4", "5", "6", "7 or more"], key="Sinusitis__c.Sinus_Q15__c")
+        st.selectbox("Number of incapacitating episodes (requiring 4-6 weeks of antibiotics) over the last 12 months:", ["--select--", "0", "1", "2", "3 or more"], key="Sinusitis__c.Sinus_Q16__c")
 
     rules = """
-    Focus strictly on Symptoms and Severity. IGNORE ANY MENTIONS OF SURGERY IN THIS STEP.
+    Focus strictly on Symptoms and Severity of Sinusitis. IGNORE ANY MENTIONS OF SURGERY IN THIS STEP.
     1. Cross-reference the 'Brief history' from Step 1. If 'Brief history' describes ongoing symptoms, but they selected "No" for 'Seeking service connection' or didn't check any symptoms here, FAIL.
     2. SYMPTOMS & SINUS CROSS-CHECK: Every symptom and affected sinus checked in the multiselects MUST be explicitly supported or described in the 'Detailed symptom description'. If a checked symptom or specific sinus (e.g., "Maxillary") is completely ignored in the text, or if the text contradicts the selected sinuses, FAIL.
     3. VAGUE ANSWER DETECTION: If the description is too generic (e.g., "I get bad headaches", "It hurts", "They are severe") without specific context like frequency, duration, or triggers, FAIL. Demand more specific functional details.
@@ -584,7 +644,7 @@ elif st.session_state.step == 3:
                 return "Please select the number of incapacitating episodes."
         return None
 
-    render_navigation("Symptoms", rules, python_validation=validate_step_3)
+    render_navigation("Symptoms and Severity of Sinusitis", rules, python_validation=validate_step_3)
 # ==========================================
 # STEP 4: SURGERIES
 # ==========================================
@@ -598,7 +658,7 @@ elif st.session_state.step == 4:
     * **Findings:** Briefly explain what the surgeon did or discovered.
     """)
     
-    surg_trigger = st.radio("Have you ever had sinus surgery?", ["--select--", "Yes", "No"], index=0, key="Sinusitis__c.Sinus_Q17__c")
+    surg_trigger = st.radio("Have you ever had sinus surgery?", [ "Yes", "No"], index=0, key="Sinusitis__c.Sinus_Q17__c")
     
     # Mapa kluczy TYLKO dla detali operacji (Date, Type, Findings)
     surg_keys = [
@@ -717,8 +777,8 @@ elif st.session_state.step == 5:
         st.session_state["Sinusitis__c.Date_Submitted__c"] = today_str
         st.session_state.form_data["Sinusitis__c.Date_Submitted__c"] = today_str
 
-    st.text_input("Veteran Name: *", key="Sinusitis__c.DBQ__c.Veteran_Name_Text__c", help="Enter your full legal name (First and Last).")
-    st.text_input("Date Submitted (MM/DD/YYYY): *", key="Sinusitis__c.Date_Submitted__c", help="This is automatically set to today's date.")
+    st.text_input("Veteran Name:", key="Sinusitis__c.DBQ__c.Veteran_Name_Text__c", help="Enter your full legal name (First and Last).")
+    st.text_input("Date Submitted (MM/DD/YYYY):", key="Sinusitis__c.Date_Submitted__c", help="This is automatically set to today's date.")
     
     st.divider()
     
