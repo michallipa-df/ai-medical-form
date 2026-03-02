@@ -29,18 +29,19 @@ class GroqMedicalScribe:
         RULES: {rules}
         
         CRITICAL TONE & FORMAT INSTRUCTIONS FOR THE HINT:
-        1. Speak directly to the user in the second person ("You" / "Your"). NEVER use "The Veteran" or "The user".
-        2. BE SPECIFIC BUT EXTREMELY CONCISE: Name the exact fields with errors, but DO NOT recite the rules back to the user. 
-        3. NO BABBLING OR OVER-EXPLAINING: DO NOT explain the logic behind the rules. DO NOT mention what other dropdown options would require. State ONLY what is logically wrong or missing in 1-2 short, punchy sentences.
+        1. Speak directly to the user in the second person ("You" / "Your").
+        2. BE EXTREMELY CONCISE. State ONLY the exact missing or conflicting information in EXACTLY ONE short sentence.
+        3. STRICT BAN ON UNNECESSARY INFO: DO NOT mention rules that are satisfied. DO NOT mention elements that are not required for their specific claim type (e.g., if LINK is not required, DO NOT say "link is not required").
+        4. NO REPETITION. Say what is missing once and stop.
         
-        BAD EXAMPLE (Do NOT do this): "You selected 'Re-evaluation', which requires HOW and WHEN. You provided WHEN but are missing HOW, and you don't need the LINK for this option..."
-        GOOD EXAMPLE (Do this): "Your 'History' is missing details on HOW your symptoms began. Please add this information."
+        BAD EXAMPLE (Do NOT do this): "Your 'History' is missing details on HOW your symptoms began and the LINK is not required, but you are missing no other elements, however HOW is required."
+        GOOD EXAMPLE (Do this): "Your 'History' is missing details on HOW your symptoms began."
         
         You must output ONLY a valid JSON object.
         Format exactly like this:
         {{
           "status": "PASS" or "FAIL",
-          "hint": "If FAIL, write your short, direct hint here following the tone instructions. If PASS, leave empty."
+          "hint": "If FAIL, write your 1-sentence hint here. If PASS, leave empty."
         }}
         """
         
