@@ -193,48 +193,73 @@ st.set_page_config(page_title="Sinusitis DBQ Validation", layout="centered")
 
 # --- CUSTOM CSS DLA FIRMOWYCH KOLORÓW I CZCIONKI REE MEDICAL ---
 # --- CUSTOM CSS DLA FIRMOWYCH KOLORÓW I CZCIONKI REE MEDICAL ---
+# --- CUSTOM CSS DLA FIRMOWYCH KOLORÓW I CZCIONKI REE MEDICAL ---
 st.markdown("""
     <style>
+        /* --- 0. USUNIĘCIE ZAOKRĄGLEŃ LOGO --- */
+        [data-testid="stSidebar"] img {
+            border-radius: 0 !important;
+        }
+
+        /* --- 0. POWIĘKSZENIE CZCIONEK W CAŁEJ APLIKACJI --- */
+        /* Zwykły tekst, pytania, pola tekstowe i listy (z 16px na 18px) */
+        p, label, input, textarea, select, li {
+            font-size: 18px !important; 
+        }
+        /* Proporcjonalne powiększenie nagłówków */
+        h1 { font-size: 2.6rem !important; }
+        h2 { font-size: 2.0rem !important; }
+        h3 { font-size: 1.5rem !important; }
+
+        /* 1. Wymuszenie Avenir na absolutnie wszystkich elementach tekstowych */
         .stApp, p, h1, h2, h3, h4, h5, h6, label, input, textarea, select, li, div {
             font-family: 'Avenir', 'Avenir Next', sans-serif !important;
         }
         
+        /* 2. Ochrona ikon Streamlita */
         span.material-symbols-rounded, 
         .material-symbols-rounded, 
         i.material-icons {
             font-family: 'Material Symbols Rounded', 'Material Icons' !important;
         }
 
+        /* 3A. ZWYKŁE PRZYCISKI (Save, Back, Continue) */
         div.stButton > button[kind="secondary"] {
             background-color: #003048 !important;
             border: 2px solid #003048 !important;
+            padding: 0.6rem 1.2rem !important; /* Powiększenie samego przycisku */
         }
         div.stButton > button[kind="secondary"] p,
         div.stButton > button[kind="secondary"] span {
             font-family: 'Avenir', 'Avenir Next', sans-serif !important;
-            color: #fbc049 !important; /* Żółty tekst */
+            color: #fbc049 !important; 
             font-weight: 800 !important; 
+            font-size: 18px !important; /* Większy tekst na przycisku */
         }
         div.stButton > button[kind="secondary"]:hover {
             background-color: #00456a !important; 
             border: 2px solid #00456a !important;
         }
 
+        /* 3B. GŁÓWNY PRZYCISK (Validate) */
         div.stButton > button[kind="primary"] {
             background-color: #fbc049 !important;
             border: 2px solid #fbc049 !important;
+            padding: 0.6rem 1.2rem !important; /* Powiększenie samego przycisku */
         }
         div.stButton > button[kind="primary"] p,
         div.stButton > button[kind="primary"] span {
             font-family: 'Avenir', 'Avenir Next', sans-serif !important;
-            color: #003048 !important; /* Granatowy tekst */
+            color: #003048 !important; 
             font-weight: 800 !important; 
+            font-size: 18px !important; /* Większy tekst na przycisku */
         }
         div.stButton > button[kind="primary"]:hover {
             background-color: #e6ab3b !important; 
             border: 2px solid #e6ab3b !important;
         }
         
+        /* STYLIZACJA KÓŁECZEK RADIO */
         div[data-baseweb="radio"] > div:first-child {
             background-color: #e8eef4 !important;
             border: 2px solid #003048 !important;
