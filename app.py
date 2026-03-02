@@ -391,15 +391,16 @@ def render_navigation(step_name, rules, python_validation=None):
     # Tworzymy 3 równe kolumny
     col1, col2, col3 = st.columns(3)
     
+    # NOWE: Pusty pojemnik na pełnej szerokości POD przyciskami
+    msg_container = st.empty() 
+    
     with col1:
-        # Przycisk "Back" pojawia się TYLKO, jeśli nie jesteśmy w pierwszym kroku
         if st.session_state.step > 1:
             if st.button("Back", use_container_width=True):
-                st.session_state.step -= 1
+                prev_step()
                 st.rerun()
                 
     with col2:
-        # Główny, żółty przycisk Validate
         if st.button("Validate", type="primary", use_container_width=True):
             with st.spinner("Validating with AI..."):
                 error_msg = None
@@ -407,24 +408,24 @@ def render_navigation(step_name, rules, python_validation=None):
                     error_msg = python_validation()
                 
                 if error_msg:
-                    st.error(error_msg)
+                    # Wysyłamy błąd do szerokiego pojemnika
+                    msg_container.error(error_msg) 
                 else:
-                    # Wywołanie AI
-                    # Wywołanie AI (poprawione zmienne i kolejność)
                     save_step_data()
                     step_data = get_readable_step_data()
                     result = ai_auditor.validate_step(step_name, rules, step_data)
                     
                     if result == "PASS":
-                        st.success("✅ Validation Passed! Proceeding...")
+                        # Sukces też w szerokim pojemniku
+                        msg_container.success("✅ Validation Passed! Proceeding...") 
                         time.sleep(1)
                         st.session_state.step += 1
                         st.rerun()
                     else:
-                        st.warning(f"Hint: {result}")
+                        # Ostrzeżenie od AI wędruje na pełną szerokość
+                        msg_container.warning(f"🤖 AI Hint: {result}") 
                         
     with col3:
-        # Zwykły, granatowy przycisk pominięcia
         if st.button("Continue Anyway", use_container_width=True):
             st.session_state.step += 1
             st.rerun()
