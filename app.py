@@ -423,7 +423,7 @@ def render_navigation(step_name, rules, python_validation=None):
                         st.rerun()
                     else:
                         # Ostrzeżenie od AI wędruje na pełną szerokość
-                        msg_container.warning(f"🤖 AI Hint: {result}") 
+                        msg_container.warning(f"**Hint:** {result}") 
                         
     with col3:
         if st.button("Continue Anyway", use_container_width=True):
