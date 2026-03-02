@@ -410,14 +410,18 @@ def render_navigation(step_name, rules, python_validation=None):
                     st.error(error_msg)
                 else:
                     # Wywołanie AI
-                    result = ai_auditor.validate_step(step_name, st.session_state.data, rules)
-                    if result.get("status") == "FAIL":
-                        st.warning(f"🤖 AI Hint: {result.get('hint')}")
-                    else:
+                    # Wywołanie AI (poprawione zmienne i kolejność)
+                    save_step_data()
+                    step_data = get_readable_step_data()
+                    result = ai_auditor.validate_step(step_name, rules, step_data)
+                    
+                    if result == "PASS":
                         st.success("✅ Validation Passed! Proceeding...")
                         time.sleep(1)
                         st.session_state.step += 1
                         st.rerun()
+                    else:
+                        st.warning(f"Hint: {result}")
                         
     with col3:
         # Zwykły, granatowy przycisk pominięcia
