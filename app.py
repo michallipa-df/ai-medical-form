@@ -192,6 +192,7 @@ QUESTION_MAP = {
 st.set_page_config(page_title="Sinusitis DBQ Validation", layout="centered")
 
 # --- CUSTOM CSS DLA FIRMOWYCH KOLORÓW I CZCIONKI REE MEDICAL ---
+# --- CUSTOM CSS DLA FIRMOWYCH KOLORÓW I CZCIONKI REE MEDICAL ---
 st.markdown("""
     <style>
         .stApp, p, h1, h2, h3, h4, h5, h6, label, input, textarea, select, li, div {
@@ -204,22 +205,47 @@ st.markdown("""
             font-family: 'Material Symbols Rounded', 'Material Icons' !important;
         }
 
-        div.stButton > button {
-            background-color: #fbc049 !important;
-            border: 1px solid #fbc049 !important;
+        div.stButton > button[kind="secondary"] {
+            background-color: #003048 !important;
+            border: 2px solid #003048 !important;
         }
-        
-        div.stButton > button,
-        div.stButton > button p,
-        div.stButton > button span {
+        div.stButton > button[kind="secondary"] p,
+        div.stButton > button[kind="secondary"] span {
+            font-family: 'Avenir', 'Avenir Next', sans-serif !important;
+            color: #fbc049 !important; /* Żółty tekst */
+            font-weight: 800 !important; 
+        }
+        div.stButton > button[kind="secondary"]:hover {
+            background-color: #00456a !important; 
+            border: 2px solid #00456a !important;
+        }
+
+        div.stButton > button[kind="primary"] {
+            background-color: #fbc049 !important;
+            border: 2px solid #fbc049 !important;
+        }
+        div.stButton > button[kind="primary"] p,
+        div.stButton > button[kind="primary"] span {
             font-family: 'Avenir', 'Avenir Next', sans-serif !important;
             color: #003048 !important; /* Granatowy tekst */
-            font-weight: 800 !important; /* Ekstra pogrubienie tekstu (Bold) */
+            font-weight: 800 !important; 
+        }
+        div.stButton > button[kind="primary"]:hover {
+            background-color: #e6ab3b !important; 
+            border: 2px solid #e6ab3b !important;
         }
         
-        div.stButton > button:hover {
-            background-color: #e6ab3b !important; 
-            border: 1px solid #e6ab3b !important;
+        div[data-baseweb="radio"] > div:first-child {
+            background-color: #e8eef4 !important;
+            border: 2px solid #003048 !important;
+        }
+        div[data-baseweb="radio"] input:checked + div,
+        div[data-baseweb="radio"][aria-checked="true"] > div:first-child {
+            background-color: #fbc049 !important;
+            border: 2px solid #003048 !important;
+        }
+        div[data-baseweb="radio"] div > div {
+            background-color: #003048 !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -360,62 +386,39 @@ def attempt_validation(step_name, rules):
         st.rerun()
 
 def render_navigation(step_name, rules, python_validation=None):
-    st.divider()
-    
-    # --- MECHANIZM ODBIERANIA PRZEPUSTKI ---
-    if st.session_state.get('step_validation_passed'):
-        save_step_data() # Zaciągamy to, co weteran ma teraz na ekranie
-        current_data = get_readable_step_data()
-        # Jeśli obecne dane różnią się od zwalidowanego "zdjęcia", zabieramy przycisk
-        if current_data != st.session_state.get('validated_step_data'):
-            st.session_state.step_validation_passed = False
-            st.session_state.validated_step_data = None
-            st.session_state.current_warning = None # Czyścimy stare błędy, by zacząć na czysto
-    # ---------------------------------------
-
-    col1, col2 = st.columns([1, 4])
+    st.markdown("---")
+    col1, col2, col3 = st.columns(3)
     
     with col1:
-        if st.session_state.step > 1:
-            st.button("Back", on_click=prev_step, use_container_width=True)
+        if st.button("Back"):
+            st.session_state.step -= 1
+            st.rerun()
             
     with col2:
-        if st.session_state.current_warning:
-            st.warning(f"**Warning:**\n\n{st.session_state.current_warning}")
-            st.info("You can fix the error and click 'Validate Again', or force continue.")
-            
-            btn_col1, btn_col2 = st.columns(2)
-            with btn_col1:
-                if st.button("Validate Again", type="primary", use_container_width=True):
-                    if python_validation:
-                        err = python_validation()
-                        if err:
-                            st.error(f"🛑 **Required Field Missing:** {err}")
-                            return
-                    attempt_validation(step_name, rules)
-            with btn_col2:
-                if st.button("Continue Anyway", type="secondary", use_container_width=True):
-                    if python_validation:
-                        err = python_validation()
-                        if err:
-                            st.error(f"🛑 **Cannot bypass:** {err}")
-                            return
-                    proceed_to_next()
-                    st.rerun()
-        else:
-            if st.session_state.step_validation_passed:
-                st.success("✅ Validation passed! Everything looks good.")
-                if st.button("Proceed to Next Step", type="primary", use_container_width=True):
-                    proceed_to_next()
-                    st.rerun()
-            else:
-                if st.button("Validate Step", type="primary", use_container_width=True):
-                    if python_validation:
-                        err = python_validation()
-                        if err:
-                            st.error(f"🛑 **Required Field Missing:** {err}")
-                            return
-                    attempt_validation(step_name, rules)
+        # MAGICZNE SŁOWO type="primary" ROBI TEN PRZYCISK ŻÓŁTYM!
+        if st.button("Validate", type="primary"):
+            with st.spinner("Validating with AI..."):
+                error_msg = None
+                if python_validation:
+                    error_msg = python_validation()
+                
+                if error_msg:
+                    st.error(error_msg)
+                else:
+                    # Wywołanie AI
+                    result = scribe.validate_step(step_name, st.session_state.data, rules)
+                    if result.get("status") == "FAIL":
+                        st.warning(f"🤖 AI Hint: {result.get('hint')}")
+                    else:
+                        st.success("✅ Validation Passed! Proceeding...")
+                        time.sleep(1)
+                        st.session_state.step += 1
+                        st.rerun()
+                        
+    with col3:
+        if st.button("Continue Anyway"):
+            st.session_state.step += 1
+            st.rerun()
 # ==========================================
 # STEP 1: INTRODUCTION & HISTORY
 # ==========================================
