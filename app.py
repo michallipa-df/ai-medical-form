@@ -194,72 +194,85 @@ st.set_page_config(page_title="Sinusitis DBQ Validation", layout="centered")
 # --- CUSTOM CSS DLA FIRMOWYCH KOLORÓW I CZCIONKI REE MEDICAL ---
 # --- CUSTOM CSS DLA FIRMOWYCH KOLORÓW I CZCIONKI REE MEDICAL ---
 # --- CUSTOM CSS DLA FIRMOWYCH KOLORÓW I CZCIONKI REE MEDICAL ---
+# --- CUSTOM CSS DLA FIRMOWYCH KOLORÓW I CZCIONKI REE MEDICAL ---
 st.markdown("""
     <style>
-        /* --- 0. USUNIĘCIE ZAOKRĄGLEŃ LOGO --- */
+        /* --- 1. USUNIĘCIE ZAOKRĄGLEŃ LOGO (Tylko Sidebar) --- */
         [data-testid="stSidebar"] img {
             border-radius: 0 !important;
         }
 
-        /* --- 0. POWIĘKSZENIE CZCIONEK W CAŁEJ APLIKACJI --- */
-        /* Zwykły tekst, pytania, pola tekstowe i listy (z 16px na 18px) */
-        p, label, input, textarea, select, li {
-            font-size: 18px !important; 
+        /* --- 2. POWIĘKSZENIE CZCIONEK TYLKO W GŁÓWNYM PANELU --- */
+        /* Celujemy tylko w główną część aplikacji, omijając sidebar */
+        [data-testid="stMain"] p, 
+        [data-testid="stMain"] label, 
+        [data-testid="stMain"] input, 
+        [data-testid="stMain"] textarea, 
+        [data-testid="stMain"] select, 
+        [data-testid="stMain"] li {
+            font-size: 20px !important; /* Solidne, duże litery */
         }
-        /* Proporcjonalne powiększenie nagłówków */
-        h1 { font-size: 2.6rem !important; }
-        h2 { font-size: 2.0rem !important; }
-        h3 { font-size: 1.5rem !important; }
+        
+        /* Proporcjonalne powiększenie nagłówków w głównym panelu */
+        [data-testid="stMain"] h1 { font-size: 2.8rem !important; }
+        [data-testid="stMain"] h2 { font-size: 2.2rem !important; }
+        [data-testid="stMain"] h3 { font-size: 1.8rem !important; }
 
-        /* 1. Wymuszenie Avenir na absolutnie wszystkich elementach tekstowych */
+        /* Dodanie odrobiny przestrzeni w polach tekstowych, żeby duża czcionka ładnie leżała */
+        [data-testid="stMain"] input, 
+        [data-testid="stMain"] textarea {
+            padding: 0.8rem !important;
+        }
+
+        /* --- 3. GLOBALNE WYMUSZENIE CZCIONKI AVENIR --- */
         .stApp, p, h1, h2, h3, h4, h5, h6, label, input, textarea, select, li, div {
             font-family: 'Avenir', 'Avenir Next', sans-serif !important;
         }
         
-        /* 2. Ochrona ikon Streamlita */
+        /* Ochrona ikon Streamlita */
         span.material-symbols-rounded, 
         .material-symbols-rounded, 
         i.material-icons {
             font-family: 'Material Symbols Rounded', 'Material Icons' !important;
         }
 
-        /* 3A. ZWYKŁE PRZYCISKI (Save, Back, Continue) */
+        /* --- 4A. ZWYKŁE PRZYCISKI (Save, Back, Continue) --- */
         div.stButton > button[kind="secondary"] {
             background-color: #003048 !important;
             border: 2px solid #003048 !important;
-            padding: 0.6rem 1.2rem !important; /* Powiększenie samego przycisku */
+            padding: 0.6rem 1.2rem !important;
         }
         div.stButton > button[kind="secondary"] p,
         div.stButton > button[kind="secondary"] span {
             font-family: 'Avenir', 'Avenir Next', sans-serif !important;
             color: #fbc049 !important; 
             font-weight: 800 !important; 
-            font-size: 18px !important; /* Większy tekst na przycisku */
+            font-size: 18px !important;
         }
         div.stButton > button[kind="secondary"]:hover {
             background-color: #00456a !important; 
             border: 2px solid #00456a !important;
         }
 
-        /* 3B. GŁÓWNY PRZYCISK (Validate) */
+        /* --- 4B. GŁÓWNY PRZYCISK (Validate) --- */
         div.stButton > button[kind="primary"] {
             background-color: #fbc049 !important;
             border: 2px solid #fbc049 !important;
-            padding: 0.6rem 1.2rem !important; /* Powiększenie samego przycisku */
+            padding: 0.6rem 1.2rem !important;
         }
         div.stButton > button[kind="primary"] p,
         div.stButton > button[kind="primary"] span {
             font-family: 'Avenir', 'Avenir Next', sans-serif !important;
             color: #003048 !important; 
             font-weight: 800 !important; 
-            font-size: 18px !important; /* Większy tekst na przycisku */
+            font-size: 18px !important;
         }
         div.stButton > button[kind="primary"]:hover {
             background-color: #e6ab3b !important; 
             border: 2px solid #e6ab3b !important;
         }
         
-        /* STYLIZACJA KÓŁECZEK RADIO */
+        /* --- 5. STYLIZACJA KÓŁECZEK RADIO --- */
         div[data-baseweb="radio"] > div:first-child {
             background-color: #e8eef4 !important;
             border: 2px solid #003048 !important;
