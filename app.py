@@ -410,7 +410,7 @@ def render_navigation(step_name, rules, python_validation=None):
                     st.error(error_msg)
                 else:
                     # Wywołanie AI
-                    result = scribe.validate_step(step_name, st.session_state.data, rules)
+                    result = ai_auditor.validate_step(step_name, st.session_state.data, rules)
                     if result.get("status") == "FAIL":
                         st.warning(f"🤖 AI Hint: {result.get('hint')}")
                     else:
