@@ -387,16 +387,20 @@ def attempt_validation(step_name, rules):
 
 def render_navigation(step_name, rules, python_validation=None):
     st.markdown("---")
+    
+    # Tworzymy 3 równe kolumny
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        if st.button("Back"):
-            st.session_state.step -= 1
-            st.rerun()
-            
+        # Przycisk "Back" pojawia się TYLKO, jeśli nie jesteśmy w pierwszym kroku
+        if st.session_state.step > 1:
+            if st.button("Back", use_container_width=True):
+                st.session_state.step -= 1
+                st.rerun()
+                
     with col2:
-        # MAGICZNE SŁOWO type="primary" ROBI TEN PRZYCISK ŻÓŁTYM!
-        if st.button("Validate", type="primary"):
+        # Główny, żółty przycisk Validate
+        if st.button("Validate", type="primary", use_container_width=True):
             with st.spinner("Validating with AI..."):
                 error_msg = None
                 if python_validation:
@@ -416,7 +420,8 @@ def render_navigation(step_name, rules, python_validation=None):
                         st.rerun()
                         
     with col3:
-        if st.button("Continue Anyway"):
+        # Zwykły, granatowy przycisk pominięcia
+        if st.button("Continue Anyway", use_container_width=True):
             st.session_state.step += 1
             st.rerun()
 # ==========================================
