@@ -22,21 +22,25 @@ class GroqMedicalScribe:
             return "Groq API Key missing in Secrets."
             
         prompt = f"""
-        You are a strict medical data validation AI. Review the VETERAN'S INPUT against the VALIDATION RULES.
+        You are a strict, highly concise medical data validation AI. Review the VETERAN'S INPUT against the VALIDATION RULES.
         
         SECTION: {step_name}
         VETERAN'S INPUT: {json.dumps(step_data)}
         RULES: {rules}
         
         CRITICAL TONE & FORMAT INSTRUCTIONS FOR THE HINT:
-        1. Speak directly to the user in the second person (use "You" / "Your"). NEVER refer to them in the third person (DO NOT use "The Veteran", "The user", "They", "He/She").
-        2. BE SPECIFIC ABOUT FIELDS: If you find a contradiction or missing information across different fields, EXPLICITLY NAME the exact fields or sections where the conflict exists (e.g., "In your 'History', you wrote X, but in the 'Sinuses affected' dropdown, you selected Y.").
+        1. Speak directly to the user in the second person ("You" / "Your"). NEVER use "The Veteran" or "The user".
+        2. BE SPECIFIC BUT EXTREMELY CONCISE: Name the exact fields with errors, but DO NOT recite the rules back to the user. 
+        3. NO BABBLING OR OVER-EXPLAINING: DO NOT explain the logic behind the rules. DO NOT mention what other dropdown options would require. State ONLY what is logically wrong or missing in 1-2 short, punchy sentences.
+        
+        BAD EXAMPLE (Do NOT do this): "You selected 'Re-evaluation', which requires HOW and WHEN. You provided WHEN but are missing HOW, and you don't need the LINK for this option..."
+        GOOD EXAMPLE (Do this): "Your 'History' is missing details on HOW your symptoms began. Please add this information."
         
         You must output ONLY a valid JSON object.
         Format exactly like this:
         {{
           "status": "PASS" or "FAIL",
-          "hint": "If FAIL, write your 1-2 sentence hint here explaining what needs correction following the tone instructions above. If PASS, leave empty."
+          "hint": "If FAIL, write your short, direct hint here following the tone instructions. If PASS, leave empty."
         }}
         """
         
