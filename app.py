@@ -298,7 +298,7 @@ with st.sidebar:
     st.image("https://reemedical.com/wp-content/uploads/2025/05/REE-Medical-Header-Logo.png", use_container_width=True)
     st.divider() # Delikatna linia oddzielająca logo od reszty
     
-    st.header("💾 Save & Resume")
+    st.header("Save & Resume")
     st.info("Save your progress to this browser and return later.")
 
     
